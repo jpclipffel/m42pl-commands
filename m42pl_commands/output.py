@@ -50,7 +50,7 @@ class Output(DequeBufferingCommand):
         '''
         super().__init__(format, header, buffer)
         # ---
-        self.format = Field(format, default='json')
+        self.format = Field(format, default=format)
         self.header = Field(header, default=False)
         self.buffer = Field(buffer, default=1)
         # ---

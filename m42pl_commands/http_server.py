@@ -26,7 +26,15 @@ class HTTPServer(GeneratingCommand):
             kwargs['pipeline'] = items[1][1:]
             return args, kwargs
 
-    def __init__(self, host: str = '127.0.0.1', port: int = 8080, pipeline: str = None):
+    def __init__(self, host: str = '127.0.0.1', port: int = 8080,
+                    pipeline: str = None):
+        """
+        :param host:        Server host
+                            Defaults to local host (127.0.0.1)
+        :param port:        Server port
+                            Defaults to 8080
+        :param pipeline:    Sub-pipeline ID
+        """
         super().__init__(host, port, pipeline)
         self.host = Field(host, default=host)
         self.port = Field(port, default=port)
@@ -35,6 +43,10 @@ class HTTPServer(GeneratingCommand):
     async def target(self, event, pipeline):
 
         async def handle(request):
+            """Handle a single HTTP request.
+
+            :param request:     HTTP request to handle
+            """
             jsdata = await request.json()
             resp = []
             async for e in self.sub_pipeline(Event(data=jsdata)):
@@ -50,7 +62,6 @@ class HTTPServer(GeneratingCommand):
         await runner.setup()
         site = web.TCPSite(runner, 'localhost', await self.port.read(event, pipeline))
         await site.start()
-        # Run for ever
+        # Run forever
         while True:
             await asyncio.sleep(3600)
-        yield None

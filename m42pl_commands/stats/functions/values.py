@@ -2,6 +2,9 @@ from .base import StatsFunction
 
 
 class Values(StatsFunction):
+    """Returns the list of unique values for a given field.
+    """
+
     async def target(self, event, dataset, pipeline):
         event_value = await self.source_field.read(event)
         if not isinstance(dataset, list):

@@ -1,10 +1,11 @@
-# M42PL - Commands
+# M42PL - Core commands
 
-Core [M42PL](https://github.com/jpclipffel/m42pl-core) commands.
+Most of [M42PL][m42pl-core] functionnalities are implemented by **commands**.
+Core commands are required by M42PL and are comparable to a programming
+language standard library.
 
-## What are M42PL commands ?
-
-M42PL commands implements all language-level functionnalities.
+The unstable core commands (in development or being tested) are in a 
+[separate repository][m42pl-commands-lab].
 
 ## Installation
 
@@ -15,32 +16,44 @@ pip install -e m42pl-commands
 
 ## Commands list
 
-| Aliases                           | Module            | Type         | Status |
-|-----------------------------------|-------------------|--------------|--------|
-| `script`                          | `script.py`       | -            | Alpha  |
-| `output`, `print`                 | `output.py`       | `Streaming`  | Alpha  |
-| `mpl_commands`, `mpl_command`     | `mpl_commands.py` | `Generating` | Alpha  |
-| `ignore`, `comment`               | `ignore.py`       | `Meta`       | Alpha  |
-| `echo`                            | `echo.py`         | `Generating` | Alpha  |
-| `expand`, `mvexpand`              | `expand.py`       | `Streaming`  | Alpha  |
-| `fields`                          | `fields.py`       | `Streaming`  | Alpha  |
-| `foreach`                         | `foreach.py`      | `Streaming`  | Alpha  |
-| `rename`                          | `rename.py`       | `Streaming`  | Alpha  |
-| `eval`                            | `eval.py`         | `Streaming`  | Alpha  |
-| `stats`, `aggre`, `aggregate`     | `stats`           | `Streaming`  | Alpha  |
-| `xpath`                           | `xpath.py`        | `Streaming`  | Alpha  |
-| `make`, `makeevent`, `makeevents` | `make.py`         | `Generating` | Alpha  |
-| `read`                            | `read.py`         | `Generating` | Alpha  |
-| `process`                         | `process.py`      | `Generating` | Alpha  |
-| `url`, `curl`, `wget`             | `url`             | `Generating` | Alpha  |
-| `http_server`                     | `http_server`     | `Generating` | Alpha  |
+| Aliases                              | Module                | Type                 | Short description                               |
+|--------------------------------------|-----------------------|----------------------|-------------------------------------------------|
+| `script`                             | `script.py`           | -                    | Parse a M42PL script and produces the pipelines |
+| `until`                              | `until.py`            | `Generating`         | Runs a sub-pipeline until a field becomes true  |
+| `make`, `makeevent`, `makeevents`    | `make.py`             | `Generating`         | Generate events                                 |
+| `read`                               | `read.py`             | `Generating`         | Read from file                                  |
+| `process`                            | `process.py`          | `Generating`         | Run an external process                         |
+| `url`, `curl`, `wget`                | `url/asynchronous.py` | `Generating`         | Performs an HTTP request                        |
+| `url_sync`, `curl_sync`, `wget_sync` | `url/synchronous.py`  | `Generating`         | Performs an HTTP request                        |
+| `http_server`                        | `http_server`         | `Generating`         | Start a simple HTTP server                      |
+| `mpl_commands`, `commands`           | `mpl_commands.py`     | `Generating`         | List the available commands, their syntax, etc. |
+| `echo`                               | `echo.py`             | `Generating`         | Returns an empty event or the latest event      |
+| `foreach`                            | `foreach.py`          | `Streaming`          | Runs a sub-pipeline for each event              |
+| `where`                              | `where.py`            | `Streaming`          | Filter events using a Python expression         |
+| `macro`                              | `macro.py`            | `Meta` , `Streaming` | Record or run a macro                           |
+| `output`, `print`                    | `output.py`           | `Streaming`          | Print events on the screen                      |
+| `expand`, `mvexpand`                 | `expand.py`           | `Streaming`          | Returns one event per field value               |
+| `fields`                             | `fields.py`           | `Streaming`          | Filter fields                                   |
+| `rename`                             | `rename.py`           | `Streaming`          | Rename fields                                   |
+| `eval`                               | `eval.py`             | `Streaming`          | Evaluate new fields using a Python expression   |
+| `stats`, `aggre`, `aggregate`        | `stats`               | `Streaming`          | Performs statistical and aggregating operations |
+| `regex`, `rex`, `rx`                 | `regex.py`            | `Streaming`          | Extracts fields using regular expressions       |
+| `xpath`                              | `xpath.py`            | `Streaming`          | Extracts fields using XPath expressions         |
+| `sleep`                              | `sleep.py`            | `Streaming`          | Pause the pipeline execution during N seconds   |
+| `ignore`, `comment`                  | `ignore.py`           | `Meta`               | Comment the command                             |
 
 ## Tests
 
 The testing mechanism is still being build. Ultimately, each command
-must have its own test script with itw own set of `TestScripts`.
+must have its own test script with its own set of `TestScripts`.
 
 | Test type      | Snippet                              | Description                  |
 |----------------|--------------------------------------|------------------------------|
+| All commands   | `python -m unittest tests/test_*.py` | Test all commands at once    |
 | Single command | `python -m unittest tests.<command>` | Test the command `<command>` |
 | Single command | `python tests/<command>.py`          | Test the command `<command>` |
+
+---
+
+[m42pl-core]: https://github.com/jpclipffel/m42pl-core
+[m42pl-commands-lab]: https://github.com/jpclipffel/m42pl-commands-lab

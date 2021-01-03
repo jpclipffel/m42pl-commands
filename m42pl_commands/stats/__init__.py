@@ -7,24 +7,28 @@ from m42pl.event import Event
 from m42pl.fields import Field
 
 # Stats functors
+# Each stats functions (aka. functors) is defined in its own module.
+# The module 'functions' (imported here as 'stats_functions') holds a
+# a dict named 'names' which map a stats function name with its class.
 from . import functions as stats_functions
 
 
-
 class StreamStats(StreamingCommand):
-    _aliases_ = ['_streamstats', ]
+    """Handle the statistical operations.
+    """
+    _aliases_ = ['_streamstats',]
 
     def __init__(self, functions: list, fields: list):
-        '''
+        """
         :param functions:   Aggregation functions list.
                             Ex: `[('function_name', 'source_field', 'dest_field')]`
         :param fields:      Aggregation fields list.
-        '''
+        """
         super().__init__(functions, fields)
         self.aggr_fields = [Field(f) for f in fields]
         self.aggregates = {} # type: dict
         # ---
-        # Build stated fields map (== functions calling map)
+        # Build the stated fields map (== functions calling map)
         self.stated_fields = {}
         for function in functions:
             # Extract and format function name, source field and destination field names
@@ -54,28 +58,21 @@ class StreamStats(StreamingCommand):
 
 
 class PostStats(MergingCommand):
-    _aliases_ = ['_poststats', ]
+    """PostStats *will* be used to aggregate stats results.
+    """
+    _aliases_ = ['_poststats',]
 
     async def target(self, event, pipeline):
         yield event
 
 
 class Stats(StreamingCommand):
+    """Stats command entry point.
+    """
+
     _about_   = 'Performs statistical operations on an event stream'
-    _syntax_  = 'stats ( <function> [ as <field> ] [, ...] ) by ( <field> [, ...] )'
-    _aliases_ = ['stats', 'aggr', 'aggregate', ]
-
-    # __grammar_blocks__ = StreamingCommand.__base_grammar_blocks__
-    # __grammar_blocks__['start'] = dedent('''\
-    #     function_name   : NAME
-    #     function_body   : ( "(" eval_expression? ")" )?
-    #     function_alias  : ("as" field)?
-    #     function        : function_name function_body function_alias
-    #     functions       : function (","? function)*
-    #     fields          : field+
-    #     start           : functions "by" fields
-    # ''')
-
+    _syntax_  = 'stats <function> [as <field>], ... by <field>, ...'
+    _aliases_ = ['stats', 'aggr', 'aggregate']
     _grammar_ = OrderedDict(StreamingCommand._grammar_)
     _grammar_.pop('collections_rules')
     _grammar_['stats_rules'] = dedent('''\
@@ -91,8 +88,6 @@ class Stats(StreamingCommand):
     ''')
 
     class Transformer(StreamingCommand.Transformer):
-        '''Command's Lark transformer.
-        '''
         function_name   = lambda self, items: str(items[0])
         function_body   = lambda self, items: len(items) and str(items[0]) or None
         function_alias  = lambda self, items: len(items) and str(items[0]) or None
@@ -103,4 +98,16 @@ class Stats(StreamingCommand):
         start           = lambda self, items: (tuple(), { 'functions': items[0], 'fields': items[1] })  # type: ignore
 
     def __new__(self, *args, **kwargs):
+        """Create the required stats commands instances.
+        
+        The `stats` commands works with two subcommands:
+
+        * `_streamstats` performs the actual statistical operations.
+          Ultimately, I must switch to NumPy or Pandas instead of
+          using a self-made implementation of the stats functors.
+        * `_postats` collect the stat-ed events and performs the late
+          operations / functors. This will be needed for instance when
+          calculating a mean using a pipeline dispatched among multiple
+          processes.
+        """
         return StreamStats(*args, **kwargs), PostStats()

@@ -10,6 +10,14 @@ class Expand(StreamingCommand):
     _aliases_   = ['expand', 'mvexpand']
 
     def __init__(self, field: str):
+        """
+        :param field:   Field to expand.
+        """
+        super().__init__(field)
+        # ---
+        # Field setup
+        # - If not found, the field is an empty list
+        # - If found, the field is casted to a list
         self.field = Field(field, default=[], cast=[])
 
     async def target(self, event, pipeline):

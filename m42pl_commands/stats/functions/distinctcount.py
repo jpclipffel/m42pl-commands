@@ -2,8 +2,8 @@ from .base import StatsFunction
 
 
 class DistinctCount(StatsFunction):
-    '''Computes the count of distinct value for the given field.
-    '''
+    """Counts the number of distinct value for a given field.
+    """
 
     async def target(self, pipeline, event, dataset):
         event_value = str(event.get_data(self.source_field))

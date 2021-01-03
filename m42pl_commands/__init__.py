@@ -6,19 +6,13 @@ from . import script
 from . import output
 
 # Internal and intropection
-from . import mpl_commands, mpl_merge
-
-# Multiprocessing support
-from . import mpl_mpi
-
-# Casting
-from . import msgpack
+from . import mpl_commands, macro
 
 # Control flow
-from . import ignore, echo, expand, fields, foreach
+from . import ignore, echo, expand, fields, foreach, until, sleep
 
 # Data manipulation
-from . import rename, eval, stats, xpath #, jspath
+from . import rename, eval, stats, regex, xpath
 
 # Filtering
 from . import where

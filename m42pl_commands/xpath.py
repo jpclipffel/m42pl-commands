@@ -26,14 +26,17 @@ class XPath(StreamingCommand):
 
     async def target(self, event, pipeline):
         tree = etree.fromstring(await self.src.read(event, pipeline), parser=self.parser)
-        matches = self.xpath(tree)
-        if matches:
-            event = await self.dest.write(event, matches)
-        # for element in matches:
-        #     if isinstance(element, etree._ElementUnicodeResult):
-        #         self.dest.write(event.data, )
-        #         yield Event(data={
-        #             'xpath': element
-        #         })
-            # print(type(m), m, m.attrib)
-        yield event
+        matches = []
+        # LXML's XPath may returns different values.
+        # Reference: https://lxml.de/xpathxslt.html#xpath-return-values
+        for match in self.xpath(tree, smart_strings=False):
+            # Literals
+            if isinstance(match, (bool, int, float, str)):
+                matches.append(match)
+            # Elements
+            else:
+                matches.append({
+                    'attrib': match.attrib,
+                    'text': match.text
+                })
+        yield await self.dest.write(event, matches)

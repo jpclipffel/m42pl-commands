@@ -2,22 +2,22 @@ from m42pl.fields import Field
 
 
 class StatsFunction:
-    '''Base stats function.
-    '''
+    """Base stats function (aka. functor).
+    """
     
     def __init__(self, source_field: Field, aggr_fields: list, dest_field: Field, aggregates: dict):
-        '''
+        """
         :param source_field:    Aggregation function source field (must exist).
-                                Ex: "| stats min(<source filed>) by ...
+                                Ex: "| stats min(<source field>) by ...
                                 
         :param aggr_fields:     Aggregations fields.
-                                Ex: "| stats min(...) by <aggr_fields>"
+                                Ex: "| stats min(<source_field>) by <aggr_fields>"
                                 
         :param dest_field:      Aggregation function result field (created or overwriten).
-                                Ex: "| stats min(...) as <dest_field> by ..."
+                                Ex: "| stats min(<source_field>) as <dest_field> by <aggr_fields>"
                                 
         :param aggregates:      Aggregations structure.
-        '''
+        """
         self.source_field = source_field
         self.aggr_fields = aggr_fields
         self.dest_field = dest_field

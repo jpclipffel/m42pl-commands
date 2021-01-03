@@ -4,11 +4,18 @@ from m42pl.fields import Field
 
 
 class Read(GeneratingCommand):
-    _about_     = 'Read a file content at once or line by line'
-    _aliases_   = ['read', ]
-    _syntax_    = '<[path=]path> [[mode=]{file|line}]'
+    _about_     = 'Read a text file'
+    _aliases_   = ['read', 'readfile']
+    _syntax_    = '[path=]<path> [[mode=](file|line)]'
     
     def __init__(self, path: str, mode: str = 'line'):
+        """
+        :param path:    File path
+        :param mode:    Read mode
+                        If mode is 'line', yields file line by line.
+                        If mode is 'file', yields file at once.
+                        Defaults to 'line'.
+        """
         super().__init__(path)
         self.path = Field(path)
         self.mode = Field(mode, default=mode)

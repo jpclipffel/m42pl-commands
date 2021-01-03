@@ -4,15 +4,17 @@ import uuid
 from collections import OrderedDict
 
 from lark import Transformer as _Transformer, Discard
+import lark.exceptions
 
 import m42pl
+import m42pl.errors as errors
 from m42pl.commands import Command
 from m42pl.pipeline import Pipeline
 from m42pl.context import Context
 
 
 class ScriptBuilder(Command):
-    '''The `script` command parse a M42PL script using two
+    """The `script` command parse a M42PL script using two
     :param:`mode`s:
 
     * `context` (default): The source :param:`script` is parsed and
@@ -26,16 +28,19 @@ class ScriptBuilder(Command):
     commands are parsed or not: If set to `False`, only the pipeline
     structure is parsed, and the commands are rendered as string.
     This is useful mostly for testing purposes.
-    '''
+    """
 
     _about_     = 'Parses a M42PL script'
     _syntax_    = '[script=]<script> [mode={{ pipeline|json}}]'
     _aliases_   = ['script',]
+    _name_      = 'script'
     _grammar_   = OrderedDict({
         'directives': dedent('''\
+            COMMENT : "/*" /.*/ "*/" 
             %import common.WS
             %import common.NEWLINE
             %ignore NEWLINE
+            %ignore COMMENT
         '''),
         # ---
         'fields_terminals': Command._grammar_['fields_terminals'],
@@ -46,16 +51,6 @@ class ScriptBuilder(Command):
         # ---
         'fields_rules': Command._grammar_['fields_rules'],
         # ---
-        # 'script_rules': dedent('''\
-        #     space       : WS+
-        #     body        : (field | WS | SYMBOL)+
-        #     block       : "[" (space | commands)? "]"
-        #     blocks      : (block space? ","? space?)+
-        #     command     : space? "|" space? NAME body? blocks?
-        #     commands    : command+
-        #     pipeline    : commands
-        #     start       : pipeline
-        # ''')
         'script_rules': dedent('''\
             space       : WS+
             body        : (field | WS | SYMBOL)+
@@ -70,8 +65,8 @@ class ScriptBuilder(Command):
 
 
     class Transformer(_Transformer):
-        '''Base script transformer.
-        '''
+        """Base script transformer.
+        """
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -95,16 +90,27 @@ class ScriptBuilder(Command):
                                             .lstrip(' ') \
                                             .rstrip(' ')
 
+
     class ContextTransformer(Transformer):
-        '''Returns a new :class:`Context` from the parsed script.
-        '''
+        """Returns a new :class:`Context` from the parsed script.
+        """
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.context = Context()
 
         def command(self, items):
-            # print(f'command --> {items}')
+
+            def setup_command(command, items):
+                if isinstance(command, (list, tuple)):
+                    for c in command:
+                        setup_command(c, items)
+                else:
+                    command._lncol_ = items[0].line, items[0].column
+                    command._offset_ = items[0].pos_in_stream
+                    command._name_ = command_name
+
+            # Extract command name and body
             command_name = str(items[0])
             command_body = ' '.join(
                 filter(
@@ -112,7 +118,20 @@ class ScriptBuilder(Command):
                     len(items) > 1 and items[1:] or []
                 )
             )
-            return m42pl.command(command_name).from_script(command_body)
+            # Instanciate new command
+            try:
+                command = m42pl.command(command_name).from_script(command_body)
+            except Exception as error:
+                raise errors.ScriptError(
+                    line=items[0].line,
+                    column=items[0].column,
+                    offset=items[0].pos_in_stream,
+                    message=str(error)
+                )
+            # Setup command instance
+            setup_command(command, items)
+            # Done
+            return command
         
         def commands(self, items):
             return items
@@ -143,8 +162,8 @@ class ScriptBuilder(Command):
 
 
     class JsonTransformer(Transformer):
-        '''Returns a JSON string from the parsed script.
-        '''
+        """Returns a JSON string from the parsed script.
+        """
         
         def __init__(self, parse_commands: bool = True,
                      *args, **kwargs):
@@ -155,9 +174,10 @@ class ScriptBuilder(Command):
             command_name = str(items[0])
             command_body = ' '.join(filter(None, items[1:])) or ''
             if self.parse_commands:
-                command = m42pl.command(command_name) \
-                          .from_script(command_body)
-                if type(command) in [list, tuple]:
+                command = m42pl.command(command_name).from_script(command_body)
+                command._lncol_ = items[0].line, items[0].column
+                command._name_ = command_name
+                if isinstance(command, (list, tuple)):
                     return [c.to_dict() for c in command]
                 return command.to_dict()
             else:
@@ -201,12 +221,12 @@ class ScriptBuilder(Command):
 
     def __init__(self, source: str, mode: str = 'context',
                  parse_commands: bool = True):
-        '''
+        """
         :param source:          Source script
         :param mode:            Parsing mode ('pipeline' or 'json').
                                 Defaults to 'pipeline'.
         :param parse_commands:  Parses commands if `True` (default).
-        '''
+        """
         self.source = source
         if mode == 'context':
             self._transformer_ = self.ContextTransformer() # type: ignore
@@ -216,14 +236,42 @@ class ScriptBuilder(Command):
             raise Exception(f'unknow parsing mode: {mode}')
 
     def target(self):
-        # Cleanup source and add a leading '|' if necessary.
-        source = self.source.lstrip(' ')
-        if source[0] != '|':
+        # ---
+        # Cleanup source and add a leading '|' if necessary
+        source = self.source.lstrip()
+        if len(source) >= 2 and source[0:2] != "/*" and source[0] != '|':
             source = f'| {source}'
+        # ---
         # Parse and transform source.
-        return self._transformer_.transform(
-            self._parser_.parse(source)
-        )
-    
+        try:
+            return self._transformer_.transform(
+                self._parser_.parse(source)
+            )
+        # ---
+        # Handle errors
+        # - Lex and parse errors occurs when parsing the source
+        # - Vist errors occurs when building the pipeline
+        except (lark.exceptions.LexError,
+                lark.exceptions.ParseError,
+                lark.exceptions.VisitError) as error:
+            # Raise the underlying M42PL error
+            if isinstance(error.__context__, errors.M42PLError):
+                raise error.__context__ from None
+            # Build and raise new M42PL error
+            offset = getattr(error, 'pos_in_stream', -1)
+            raise errors.ScriptError(
+                line=getattr(error, 'line', -1),
+                column=getattr(error, 'column', -1),
+                # pylint: disable = unsubscriptable-object
+                offset=isinstance(offset, tuple) and offset[0] or offset,
+                message=str(error)
+            ) from error
+        # Raise generic M42PL error for unknown error cases
+        except Exception as error:
+            raise errors.CommandError(
+                command=self,
+                message=str(error)
+            )
+
     def __call__(self, *args, **kwargs):
         return self.target()

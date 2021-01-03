@@ -7,7 +7,7 @@ from m42pl.fields import Field
 
 
 class Where(StreamingCommand):
-    _about_     = 'Filter events with an eval expression'
+    _about_     = 'Filter events using an eval expression'
     _aliases_   = ['where',]
     _syntax_    = '<expression>'
     _grammar_   = {'start': dedent('''\
@@ -26,7 +26,5 @@ class Where(StreamingCommand):
         try:
             if self.expr(event.data):
                 yield event
-        except Exception as error:
-            print(error)
-            raise
-            # pass
+        except Exception:
+            pass

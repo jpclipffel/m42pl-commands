@@ -2,6 +2,9 @@ from .base import StatsFunction
 
 
 class Count(StatsFunction):
+    """Count the number of events.
+    """
+    
     async def target(self, event, dataset, pipeline):
         event_value = event.signature
         if not isinstance(dataset, dict):

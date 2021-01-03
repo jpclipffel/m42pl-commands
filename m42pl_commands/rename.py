@@ -7,12 +7,12 @@ from m42pl.fields import Field
 
 class Rename(StreamingCommand):
     _about_     = 'Rename fields'
-    _syntax_    = '<existing field> as <new field> [, ...]'
+    _syntax_    = '<existing_field> [as] <new_field> [, ...]'
     _aliases_   = ['rename',]
 
     _grammar_ = OrderedDict(StreamingCommand._grammar_)
     _grammar_['start'] = dedent('''\
-        expr    : field "as" field
+        expr    : field "as"? field
         start   : (expr ","?)+
     ''')
 
@@ -24,6 +24,11 @@ class Rename(StreamingCommand):
             return (), {'fields': items}
 
     def __init__(self, fields: list):
+        """
+        :param fields:  Fields renaming tuple
+                        Format is `[('name', 'new_name'), ...]`
+        """
+        super().__init__(fields)
         self.fields = [
             (Field(old), Field(new))
             for old, new
@@ -32,7 +37,7 @@ class Rename(StreamingCommand):
 
     async def target(self, event, pipeline):
         for old, new in self.fields:
-            # TODO: Add a `pop()` method to the field API
+            # TODO: Add a `pop()` method to the field API.
             # This will become:
             # >>> await new.write(event, wait old.pop(event))
             # Instead of:

@@ -11,6 +11,18 @@ from m42pl.fields import Field
 from m42pl.commands import DequeBufferingCommand
 
 
+class JSONDecoder(json.JSONEncoder):
+    """Custom JSON decoder to handle non-generic event fields.
+
+    Simply returns the item (`o`) representation as a string.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    def default(self, o):
+        return repr(o)
+
+
 class RawFormatter:
     """Format event as a string.
     """
@@ -28,7 +40,7 @@ class JSONFormatter:
     def __call__(self, event):
         try:
             return highlight(
-                json.dumps(event.data, indent=2),
+                json.dumps(event.data, indent=2, cls=JSONDecoder),
                 self.lexer,
                 self.formatter
             )

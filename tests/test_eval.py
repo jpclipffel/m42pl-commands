@@ -60,6 +60,36 @@ class Eval(unittest.TestCase, StreamingCommand):
             expected=[Event({
                 'result': '42 is the answer'
             })]
+        ),
+
+        TestScript(
+            name='default_value_simple',
+            source=dedent('''\
+                | eval result = field(a, 42)
+            '''),
+            expected=[Event({
+                'result': 42
+            })]
+        ),
+
+        TestScript(
+            name='default_value_nested_1',
+            source=dedent('''\
+                | eval result = field(a.b, 42)
+            '''),
+            expected=[Event({
+                'result': 42
+            })]
+        ),
+
+        TestScript(
+            name='default_value_nested_2',
+            source=dedent('''\
+                | eval result = field(a.b.c, 42)
+            '''),
+            expected=[Event({
+                'result': 42
+            })]
         )
 
     ]

@@ -4,7 +4,7 @@ from lxml import etree
 
 from m42pl.event import Event
 from m42pl.commands import StreamingCommand
-from m42pl.fields import Field, BaseField
+from m42pl.fields import Field
 
 
 class XPath(StreamingCommand):

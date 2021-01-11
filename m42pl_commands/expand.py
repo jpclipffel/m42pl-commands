@@ -18,15 +18,16 @@ class Expand(StreamingCommand):
         # Field setup
         # - If not found, the field is an empty list
         # - If found, the field is casted to a list
-        self.field = Field(field, default=[], cast=[])
+        self.field = Field(field, default=[], seqn=True)
 
     async def target(self, event, pipeline):
         for item in await self.field.read(event):
             # Copy source event
             _event = deepcopy(event)
+            _event.signature = None
             # Copied events shares the same signature;
             # Ensure copied events have a unique signature by signing 
             # them individually
-            _event.sign()
+            # _event.sign()
             # Set expanded field value to copied event and yield
             yield await self.field.write(_event, item)

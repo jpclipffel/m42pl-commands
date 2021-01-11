@@ -50,21 +50,20 @@ class JSONFormatter:
 
 class Output(DequeBufferingCommand):
     _about_     = 'Prints events'
-    _syntax_    = '''[[format=]{'raw'|'json'}] [[buffer=]number]'''
+    _syntax_    = '[[format=]{raw|json}] [[buffer=]<number>]'
     _aliases_   = ['output', 'print']
 
     def __init__(self, format: str = 'json', header: bool = False,
                     buffer: int = 0):
-        '''Initializes the command instance.
-        
+        """
         :param format:  Output format
         :param buffer:  Buffer max size. Defaults to 1.
-        '''
+        """
         super().__init__(format, header, buffer)
         # ---
-        self.format = Field(format, default=format)
-        self.header = Field(header, default=False)
-        self.buffer = Field(buffer, default=1)
+        self.format = Field(format, default=format, type=str, seqn=False)
+        self.header = Field(header, default=False, type=bool, seqn=False)
+        self.buffer = Field(buffer, default=1, type=int, seqn=False)
         # ---
         self.counter = 0
         # ---

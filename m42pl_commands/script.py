@@ -31,7 +31,7 @@ class ScriptBuilder(Command):
     """
 
     _about_     = 'Parses a M42PL script'
-    _syntax_    = '[script=]<script> [mode={{ pipeline|json}}]'
+    _syntax_    = '[script=]<script> [mode={pipeline|json}]'
     _aliases_   = ['script',]
     _name_      = 'script'
     _grammar_   = OrderedDict({
@@ -122,6 +122,7 @@ class ScriptBuilder(Command):
             try:
                 command = m42pl.command(command_name).from_script(command_body)
             except Exception as error:
+                raise error
                 raise errors.ScriptError(
                     line=items[0].line,
                     column=items[0].column,

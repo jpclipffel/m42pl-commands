@@ -14,7 +14,7 @@ from . import functions as stats_functions
 
 
 class StreamStats(StreamingCommand):
-    """Handle the statistical operations.
+    """Handle the streaming statistical operations.
     """
     _aliases_ = ['_streamstats',]
 
@@ -25,10 +25,18 @@ class StreamStats(StreamingCommand):
         :param fields:      Aggregation fields list.
         """
         super().__init__(functions, fields)
-        self.aggr_fields = [Field(f) for f in fields]
+        # Aggregation fields
+        #  ---
+        self.aggr_fields = [
+            Field(f, default=None, seqn=True)
+            for f
+            in fields
+        ]
+        #  ---
+        # Aggreation results
         self.aggregates = {} # type: dict
         # ---
-        # Build the stated fields map (== functions calling map)
+        # Stated fields map (aka. functions calling map)
         self.stated_fields = {}
         for function in functions:
             # Extract and format function name, source field and destination field names
@@ -39,11 +47,15 @@ class StreamStats(StreamingCommand):
             if function_name in stats_functions.names:
                 self.stated_fields[dest_field] = stats_functions.names[function_name](source_field, self.aggr_fields, dest_field, self.aggregates)
             else:
-                raise Exception(f'No such stats function: {function_name}')
+                raise Exception(f'Unknown stats function: {function_name}')
 
     async def target(self, event, pipeline):
         # Sign source event
-        event.sign(self.aggr_fields)
+        event.signature = ''.join([
+            str(await field.read(event, pipeline))
+            for field 
+            in self.aggr_fields
+        ])
         # Create new event which will hold the aggregated values
         stated_event = Event(signature=event.signature)
         # Compute and add the stated fields to the new event
@@ -52,8 +64,13 @@ class StreamStats(StreamingCommand):
         # Add the aggregated-by fields to the new event
         for field in self.aggr_fields:
             await field.write(stated_event, await field.read(event))
+        # Sign the new event
+        stated_event.signature = ''.join([
+            str(await field.read(event, pipeline))
+            for field
+            in self.aggr_fields
+        ])
         # Done
-        stated_event.sign(self.aggr_fields)
         yield stated_event
 
 
@@ -71,7 +88,7 @@ class Stats(StreamingCommand):
     """
 
     _about_   = 'Performs statistical operations on an event stream'
-    _syntax_  = 'stats <function> [as <field>], ... by <field>, ...'
+    _syntax_  = '<function> [as <field>], ... by <field>, ...'
     _aliases_ = ['stats', 'aggr', 'aggregate']
     _grammar_ = OrderedDict(StreamingCommand._grammar_)
     _grammar_.pop('collections_rules')
@@ -98,7 +115,7 @@ class Stats(StreamingCommand):
         start           = lambda self, items: (tuple(), { 'functions': items[0], 'fields': items[1] })  # type: ignore
 
     def __new__(self, *args, **kwargs):
-        """Create the required stats commands instances.
+        """Creates the required stats commands instances.
         
         The `stats` commands works with two subcommands:
 

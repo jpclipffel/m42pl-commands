@@ -36,8 +36,7 @@ class Fields(StreamingCommand):
         """
         super().__init__(mode, fields)
         self.mode = Field(mode, default=mode)
-        # self.filter = mode == '+' and self.keep or self.remove
-        self.fields = [ Field(f) for f in fields ]
+        self.fields = [Field(f) for f in fields]
     
     async def setup(self, event, pipeline):
         self.mode = await self.mode.read(event, pipeline)
@@ -48,6 +47,7 @@ class Fields(StreamingCommand):
         """
         # WTF: Creating a new event without `data={}` uses current
         # event's data.
+        # TODO: Debug and resolve issue
         _event = Event(data={}, signature=event.signature)
         for field in self.fields:
             _event = await field.write(_event, await field.read(event))
@@ -56,7 +56,6 @@ class Fields(StreamingCommand):
     async def remove(self, event):
         """Remove the selected fields.
         """
-        # print(f'fields --> remove')
         for field in self.fields:
             await field.delete(event)
         return event

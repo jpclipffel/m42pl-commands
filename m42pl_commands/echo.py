@@ -9,7 +9,7 @@ class Echo(GeneratingCommand):
 
     def  __init__(self, count: int = 1):
         super().__init__(count)
-        self.count = Field(count, default=count, cast=int)
+        self.count = Field(count, default=count, type=int)
     
     async def target(self, event, pipeline):
         count = await self.count.read(event, pipeline)

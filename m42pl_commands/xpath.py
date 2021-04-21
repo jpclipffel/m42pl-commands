@@ -1,18 +1,20 @@
-from collections import OrderedDict
-from textwrap import dedent
 from lxml import etree
 
-from m42pl.event import Event
 from m42pl.commands import StreamingCommand
 from m42pl.fields import Field
 
 
 class XPath(StreamingCommand):
-    _about_     = 'Evaluate XPath expressions and assign results to fields'
+    _about_     = 'Evaluate an XPath expression'
     _syntax_    = '<[expression=]expression> <[field=]source field> [[dest=]dest field]'
     _aliases_   = ['xpath', ]
 
     def __init__(self, expression: str, src: str, dest: str):
+        """
+        :param expression:  XPath epxression
+        :param src:         Source field
+        :param dest:        Destination field
+        """
         super().__init__(expression, src, dest)
         # Initialize fields
         self.xpath = Field(expression)
@@ -25,18 +27,26 @@ class XPath(StreamingCommand):
         self.xpath = etree.XPath(await self.xpath.read(event, pipeline))
 
     async def target(self, event, pipeline):
-        tree = etree.fromstring(await self.src.read(event, pipeline), parser=self.parser)
-        matches = []
-        # LXML's XPath may returns different values.
+        # Parse
+        tree = etree.fromstring(
+            await self.src.read(event, pipeline),
+            parser=self.parser
+        )
+        # Process matched items
+        # Note: LXML's XPath may returns different object types:
+        # - Standard types (bool, int, flot, str)
+        # - Complex types (nodes)
         # Reference: https://lxml.de/xpathxslt.html#xpath-return-values
+        matched = []
         for match in self.xpath(tree, smart_strings=False):
             # Literals
             if isinstance(match, (bool, int, float, str)):
-                matches.append(match)
+                matched.append(match)
             # Elements
             else:
-                matches.append({
+                matched.append({
                     'attrib': match.attrib,
                     'text': match.text
                 })
-        yield await self.dest.write(event, matches)
+        # Done
+        yield await self.dest.write(event, matched)

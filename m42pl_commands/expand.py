@@ -22,12 +22,4 @@ class Expand(StreamingCommand):
 
     async def target(self, event, pipeline):
         for item in await self.field.read(event):
-            # Copy source event
-            _event = deepcopy(event)
-            _event.signature = None
-            # Copied events shares the same signature;
-            # Ensure copied events have a unique signature by signing 
-            # them individually
-            # _event.sign()
-            # Set expanded field value to copied event and yield
-            yield await self.field.write(_event, item)
+            yield await self.field.write(event.derive(), item)

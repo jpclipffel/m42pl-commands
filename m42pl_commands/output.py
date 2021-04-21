@@ -1,63 +1,28 @@
 import os
 import json
 
-from pygments import highlight
-# pylint: disable=no-name-in-module
-from pygments.lexers import JsonLexer
-# pylint: disable=no-name-in-module
-from pygments.formatters import TerminalFormatter
-
 from m42pl.fields import Field
-from m42pl.commands import DequeBufferingCommand
+from m42pl.commands import DequeBufferingCommand, MergingCommand
+from m42pl.utils import formatters
 
 
-class JSONDecoder(json.JSONEncoder):
-    """Custom JSON decoder to handle non-generic event fields.
+class Output(DequeBufferingCommand, MergingCommand):
+    """Prints events on the standard output.
 
-    Simply returns the item (`o`) representation as a string.
+    :ivar count:            Number of received events
+    :ivar term_columns:     Terminal's columns count
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-    
-    def default(self, o):
-        return repr(o)
 
-
-class RawFormatter:
-    """Format event as a string.
-    """
-    def __call__(self, event):
-        return str(event.data)
-
-
-class JSONFormatter:
-    """Format event as a highlighted JSON string.
-    """
-    def __init__(self):
-        self.lexer = JsonLexer()
-        self.formatter = TerminalFormatter()
-    
-    def __call__(self, event):
-        try:
-            return highlight(
-                json.dumps(event.data, indent=2, cls=JSONDecoder),
-                self.lexer,
-                self.formatter
-            )
-        except Exception as error:
-            return json.dumps({'error': str(error)}, indent=2)
-
-
-class Output(DequeBufferingCommand):
     _about_     = 'Prints events'
-    _syntax_    = '[[format=]{raw|json}] [[buffer=]<number>]'
+    _syntax_    = '[[format=](json|raw)] [[buffer=]<number>]'
     _aliases_   = ['output', 'print']
 
     def __init__(self, format: str = 'json', header: bool = False,
                     buffer: int = 0):
         """
-        :param format:  Output format
-        :param buffer:  Buffer max size. Defaults to 1.
+        :param format:  Output format ('json' or 'raw')
+        :param header:  Display header (`True`) or not (`False`)
+        :param buffer:  Buffer max size; Defaults to 1
         """
         super().__init__(format, header, buffer)
         # ---
@@ -98,11 +63,24 @@ class Output(DequeBufferingCommand):
         )
         # Prepare formatter
         if self.format.lower() == 'json':
-            self.formatter = JSONFormatter()
+            self.formatter = formatters.HJson(indent=2)
         else:
-            self.formatter = RawFormatter()
+            self.formatter = formatters.Raw()
 
     async def target(self, pipeline):
         async for event in super().target(pipeline):
             self.printer(event)
+            yield event
+
+
+class NoOut(Output):
+    """Fake output command.
+    """
+
+    _about_     = 'Mimics output syntax but do not prints events'
+    _aliases_   = ['noout', 'nooutput', 'noprint']
+
+    async def target(self, pipeline):
+        # pylint: disable=bad-super-call
+        async for event in super(Output, self).target(pipeline):
             yield event

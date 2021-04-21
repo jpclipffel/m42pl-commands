@@ -1,27 +1,35 @@
 # M42PL language
-# The 'script' commands **cannot** be used as a regular command.
-from . import script
+from . import script, mpl_commands, kv #, macro
 
 # Debug
 from . import output
 
-# Internal and intropection
-from . import mpl_commands, macro
-
 # Control flow
-from . import ignore, echo, expand, fields, foreach, until, sleep
+from . import (
+    ignore, echo, expand, fields, foreach, until, sleep, assertion, 
+    buffer, head, tailf
+)
 
 # Data manipulation
-from . import rename, eval, stats, regex, xpath
+from . import (
+    rename, eval, regex, xpath, jsonpath, stats, jinja, parse_json,
+    msgpack, extract_keyvalues, extract_maps, cut
+)
 
 # Filtering
 from . import where
 
 # Generating commands
-from . import make, read, process #, url
+from . import make, readfile, process
+
+# Output commands
+from . import writefile
 
 # Client
 from . import url
 
 # Server
 from . import http_server
+
+# ZMQ
+from . import zeromq

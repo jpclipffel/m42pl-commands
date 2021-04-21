@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import m42pl.commands
 from m42pl.event import Event
 from m42pl.fields import Field
@@ -18,9 +20,10 @@ class MPLCommands(m42pl.commands.GeneratingCommand):
     ]
     
     def __init__(self, command: str = None, ebnf: bool = False):
-        '''
-        :param command: Returns only this `command` information.
-        '''
+        """
+        :param command: Returns only the given command information
+        :param ebnbf:   Includes the command ENBF
+        """
         super().__init__(command)
         self.command_name = Field(command, default=command)
         self.ebnf = Field(ebnf, default=ebnf)
@@ -41,15 +44,13 @@ class MPLCommands(m42pl.commands.GeneratingCommand):
             source = m42pl.commands.ALIASES
         # ---
         for alias, command in source.items():
-            data = {
+            yield event.derive(data={
                 'command': {
                     'alias': alias,
                     'aliases': command._aliases_,
                     'about': command._about_,
                     'syntax': command._syntax_,
                     'type': list(filter(None, map(lambda t: issubclass(command, t) and t.__name__ or None, self.types)))[0],
+                    'ebnf': ebnf is True and getattr(command, '_ebnf_', '') or ''
                 }
-            }
-            if ebnf is True:
-                data['command']['ebnf'] = getattr(command, '_ebnf_', '')
-            yield Event(data)
+            })

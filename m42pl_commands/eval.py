@@ -22,6 +22,9 @@ class Eval(StreamingCommand):
     ''')
     
     class Transformer(StreamingCommand.Transformer):
+        # collections_rules
+        function    = lambda self, items: f'{items[0]}{", ".join([str(i) for i in items[1:-1]])}{items[-1]}'  # print(f'function --> {items}')
+        sequence    = lambda self, items: f'{items[0]}{" ".join([str(i) for i in items[1:-1]])}{items[-1]}'
         expression  = lambda self, items: (items[0], len(items) > 1 and ' '.join([str(i) for i in items[1:]]) or '')
         start       = lambda self, items: ((), {'fields': dict(items)})
     
@@ -37,6 +40,7 @@ class Eval(StreamingCommand):
         for field, expr in self.fields.items():
             try:
                 await field.write(event, expr(event.data))
-            except Exception:
+            except Exception as error:
+                self.logger.error(error)
                 await field.write(event, None)
         yield event

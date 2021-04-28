@@ -24,13 +24,11 @@ pip install -e m42pl-commands
 | `read`                               | `read.py`             | `Generating`         | Read from file                                  |
 | `process`                            | `process.py`          | `Generating`         | Run an external process                         |
 | `url`, `curl`, `wget`                | `url/asynchronous.py` | `Generating`         | Performs an HTTP request                        |
-| `url_sync`, `curl_sync`, `wget_sync` | `url/synchronous.py`  | `Generating`         | Performs an HTTP request                        |
 | `http_server`                        | `http_server`         | `Generating`         | Start a simple HTTP server                      |
 | `mpl_commands`, `commands`           | `mpl_commands.py`     | `Generating`         | List the available commands, their syntax, etc. |
 | `echo`                               | `echo.py`             | `Generating`         | Returns an empty event or the latest event      |
 | `foreach`                            | `foreach.py`          | `Streaming`          | Runs a sub-pipeline for each event              |
 | `where`                              | `where.py`            | `Streaming`          | Filter events using a Python expression         |
-| `macro`                              | `macro.py`            | `Meta` , `Streaming` | Record or run a macro                           |
 | `output`, `print`                    | `output.py`           | `Streaming`          | Print events on the screen                      |
 | `expand`, `mvexpand`                 | `expand.py`           | `Streaming`          | Returns one event per field value               |
 | `fields`                             | `fields.py`           | `Streaming`          | Filter fields                                   |
@@ -42,6 +40,8 @@ pip install -e m42pl-commands
 | `sleep`                              | `sleep.py`            | `Streaming`          | Pause the pipeline execution during N seconds   |
 | `ignore`, `comment`                  | `ignore.py`           | `Meta`               | Comment the command                             |
 
+And more to come / to add to this list.
+
 ## Tests
 
 The testing mechanism is still being build. Ultimately, each command
@@ -52,6 +52,15 @@ must have its own test script with its own set of `TestScripts`.
 | All commands   | `python -m unittest tests/test_*.py` | Test all commands at once    |
 | Single command | `python -m unittest tests.<command>` | Test the command `<command>` |
 | Single command | `python tests/<command>.py`          | Test the command `<command>` |
+
+## Documentation
+
+Commands are documented [on the language website](m42pl-site).
+
+### Documentation generation
+
+The script `docs/generate.mpl` renders the documentation from the commands
+templates.
 
 ---
 

@@ -8,12 +8,15 @@ from m42pl.fields import Field
 
 class JSONPath(StreamingCommand):
     _about_     = 'Evaluate an JSONPath expression'
-    _syntax_    = '<[expression=]expression> <[field=]source field> [[dest=]dest field]'
+    _syntax_    = (
+        '<[expression=]expression> <[field=]source field>'
+        '[[dest=]dest field]'
+    )
     _aliases_   = ['jsonpath', 'jspath']
 
     def __init__(self, expression: str, src: str = None, dest: str = 'jsonpath'):
         """
-        :param expression:  JSONPath epxression
+        :param expression:  JSONPath expression
         :param src:         Source field
         :param dest:        Destination field
         """

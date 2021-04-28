@@ -8,6 +8,9 @@ from m42pl.errors import CommandError
 
 
 class Assertion(StreamingCommand):
+    """Assert an Python `eval` expression.
+    """
+
     _about_     = 'Fails the pipeline if the given expression is false'
     _aliases_   = ['assert',]
     _syntax_    = '<expression>'

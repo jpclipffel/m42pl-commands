@@ -1,4 +1,4 @@
-from .base import StatsFunction
+from .__base__ import StatsFunction
 
 
 class DistinctCount(StatsFunction):

@@ -4,6 +4,9 @@ from . import script, mpl_commands, kv #, macro
 # Debug
 from . import output
 
+# MPI
+from . import mpi
+
 # Control flow
 from . import (
     ignore, echo, expand, fields, foreach, until, sleep, assertion, 
@@ -20,7 +23,7 @@ from . import (
 from . import where
 
 # Generating commands
-from . import make, readfile, process
+from . import make, readfile, readlines, process
 
 # Output commands
 from . import writefile

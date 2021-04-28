@@ -8,24 +8,32 @@ from .__base__ import BaseURL
 
 
 class URL(BaseURL):
+    """Synchronous HTTP client.
+    """
+
     _about_     = 'Performs synchronous HTTP calls to a given URL'
     _aliases_   = ['url_sync', 'curl_sync', 'wget_sync']
-    _syntax_    = BaseURL._syntax_.format(name='|'.join(_aliases_))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     async def target(self, event, pipeline):
+        fields = await self.fields.read(event, pipeline)
+        # Do not run if we're not in the first chunk, i.e. do not
+        # request the same URL in multiple process/tasks/threads/...
+        if not self.first_chunk:
+            return
+        # Run
         while True:
             # ---
             # Build HTTP request
             request = {
-                'method': self.method,
-                'url': self.url,
+                'method': fields.method,
+                'url': fields.url,
             }
             for field in ('headers', 'data', 'json'):
-                if isinstance(getattr(self, field), dict):
-                    request[field] = getattr(self, field)
+                if isinstance(getattr(fields, field), dict):
+                    request[field] = getattr(fields, field)
             # ---
             # Executes HTTP request
             response = requests.request(**request)
@@ -44,10 +52,10 @@ class URL(BaseURL):
             # yield Event(data={
             event.data.update({
                 'time': time.time_ns(),
-                'source': self.url,
+                'source': fields.url,
                 'request': {
-                    'method': self.method,
-                    'url': self.url,
+                    'method': fields.method,
+                    'url': fields.url,
                     'headers': dict(response.request.headers),
                     'data': request.get('data', {})
                 },
@@ -64,10 +72,10 @@ class URL(BaseURL):
             yield event
             # ---
             # Wait before next request
-            if self.frequency > 0:
-                await asyncio.sleep(self.frequency)
+            if fields.frequency > 0:
+                await asyncio.sleep(fields.frequency)
             # ---
             # Decrease requests count
-            self.count -= 1
-            if self.count <= 0:
+            fields.count -= 1
+            if fields.count <= 0:
                 break

@@ -1,1 +1,1 @@
-from . import synchronous, asynchronous
+from . import asynchronous

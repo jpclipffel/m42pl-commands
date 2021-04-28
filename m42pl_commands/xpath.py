@@ -45,7 +45,7 @@ class XPath(StreamingCommand):
             # Elements
             else:
                 matched.append({
-                    'attrib': match.attrib,
+                    'attrib': dict(match.attrib),
                     'text': match.text
                 })
         # Done

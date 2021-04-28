@@ -8,7 +8,7 @@ from m42pl.fields import Field
 
 class Jinja(StreamingCommand):
     _about_     = 'Renders a Jinja template'
-    _syntax_    = '[src_field=]{source field} [dest_field=]{destination field} [[searchpath=]<search path>]'
+    _syntax_    = '[src=]{source field} [dest=]{destination field} [[searchpath=]<search path>]'
     _aliases_   = ['jinja', 'template_jinja', 'jinja_template']
     
     def __init__(self, src: str, dest: str, searchpath: str = '.'):

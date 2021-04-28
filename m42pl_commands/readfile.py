@@ -6,7 +6,7 @@ from m42pl.fields import Field
 class ReadFile(GeneratingCommand):
     _about_     = 'Read a local file'
     _aliases_   = ['readfile']
-    _syntax_    = '[path=]{file path} [dest=]{dest field} [[mode=](file|line)]'
+    _syntax_    = '[path=]{file path} [field=]{dest field} [[mode=](file|line)]'
     
     def __init__(self, path: str, field: str = 'file', mode: str = 'line'):
         """

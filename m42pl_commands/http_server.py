@@ -17,10 +17,10 @@ class HTTPServer(GeneratingCommand):
 
     _about_     = 'Runs an HTTP server'
     _syntax_    = (
-        '''[[host=]host] [port=[port]] <pipeline> '''
-        '''| with 'method' on 'path' = <pipeline>, ...'''
+        '''[[host=]{host}] [[port]={port}] (<pipeline> '''
+        '''| with 'method' on 'path' = <pipeline>, ...)'''
     )
-    _aliases_   = ['http_server', ]
+    _aliases_   = ['http-server', 'http_server']
     _grammar_   = OrderedDict(GeneratingCommand._grammar_)
     _grammar_['start'] = dedent('''\
         rule    : STRING "on" field "=" piperef
@@ -53,23 +53,6 @@ class HTTPServer(GeneratingCommand):
                             (pipeline to run when handler is called)
         """
 
-        # async def handler(request):
-        #     """Handles an AIOHTTP request (function template).
-
-        #     :param request: AIOHTTP request
-        #     """
-        #     try:
-        #         jsdata = await request.json()
-        #     except Exception:
-        #         jsdata = {}
-        #     resp = []
-        #     async for event in pipeline.context.pipelines[piperef](
-        #         pipeline.context,
-        #         Event(data=jsdata)
-        #     ):
-        #         resp.append(event.data)
-        #     return web.Response(text=json.dumps(resp))
-
         class Handler:
             def __init__(self, runner):
                 self.runner = runner
@@ -80,9 +63,23 @@ class HTTPServer(GeneratingCommand):
                 except Exception:
                     jsdata = {}
                 resp = []
-                async for next_event in self.runner(Event(data=jsdata)):
+                async for next_event in self.runner(Event(data={
+                    'url': str(request.url),
+                    'host': request.host,
+                    'path': request.path,
+                    'scheme': request.scheme,
+                    'jsdata': jsdata,
+                    'query_string': request.query_string,
+                    'content_type': request.content_type,
+                    'content_length': request.content_length
+                })):
                     resp.append(next_event.data)
-                return web.Response(text=json.dumps(resp))
+                if len(resp) == 0:
+                    return web.Response(text='{}')
+                elif len(resp) == 1:
+                    return web.Response(text=json.dumps(resp[0]))
+                else:
+                    return web.Response(text=json.dumps(resp))
 
         runner = InfiniteRunner(
             pipeline.context.pipelines[piperef],
@@ -119,7 +116,8 @@ class HTTPServer(GeneratingCommand):
         # Default pipeline reference
         self.piperef = Field(piperef, default=piperef)
 
-    async def target(self, event, pipeline):        # Read fields
+    async def target(self, event, pipeline):
+        # Read fields
         self.fields = await self.fields.read(event, pipeline)
         # ---
         # Setup routes

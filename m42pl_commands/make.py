@@ -53,7 +53,7 @@ class Make(GeneratingCommand):
 
     async def target(self, event, pipeline):
         for i in range(self.begin_count, self.end_count):
-            yield Event(
+            yield event.derive(
                 self.fields.showinfo and {
                     'id': i,
                     'chunk': {

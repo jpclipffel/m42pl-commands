@@ -123,9 +123,10 @@ class Script(Command):
 
 
 class PipelineScript(Script):
-    """Parses a M42PL script and returns a list of :class:`Pipeline`.
+    """Parses a M42PL script and returns a :class:`Pipeline`s map.
     """
-    _about_     = 'Parses a M42PL script and returns a new context'
+
+    _about_     = 'Parses a M42PL script and returns a pipelines map'
     _syntax_    = '[script=]<script string>'
     _aliases_   = ['script',]
 
@@ -198,6 +199,10 @@ class PipelineScript(Script):
 
 
 class JSONScript(PipelineScript):
+    """Parses a M42PL script and returns :class:`dict`.
+
+    The returned :class:`dict` is JSON-serializable.
+    """
 
     _aliases_ = ['script_json',]
 
@@ -232,6 +237,8 @@ class JSONScript(PipelineScript):
             return f'@{pipeline_name}'
 
         def start(self, items):
+            _, self.pipelines['main'] = self.pipelines.popitem()
+            self.pipelines['main']['name'] = 'main'
             return self.pipelines
 
     def target(self, *args, **kwargs):

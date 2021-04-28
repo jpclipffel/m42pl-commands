@@ -17,6 +17,7 @@ setup(
     'aiohttp',
     'pygments',
     'lxml',
-    'jsonpath-ng'
+    'jsonpath-ng',
+    'jinja2'
   ]
 )

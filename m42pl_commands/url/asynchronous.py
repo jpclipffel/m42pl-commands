@@ -27,7 +27,7 @@ class URL(BaseURL):
                             mime_type: str, charset: str, **kwargs):
         """Read and decodes the given :param:`response`.
 
-        :param response:    Response sent by server
+        :param response:    Partial response sent by server
         :param mime_type:   Response's mime type, if any
         :param charset:     Response's charset, if any
         :param kwargs:      Other content type headers (ignored)

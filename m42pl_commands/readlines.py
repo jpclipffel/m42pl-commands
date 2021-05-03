@@ -3,25 +3,25 @@ from m42pl.event import Event
 from m42pl.fields import Field
 
 
-class ReadFile(GeneratingCommand):
-    _about_     = 'Read an file line by line'
+class ReadLines(GeneratingCommand):
+    _about_     = 'Read a file line by line'
     _aliases_   = ['readlines', 'readline']
-    _syntax_    = '[src=]{file path} [dest=]{dest field}'
+    _syntax_    = '[path=]{file path} [field=]{dest field}'
     
-    def __init__(self, src: str, dest: str = 'line'):
+    def __init__(self, path: str, field: str = 'line'):
         """
-        :param src:     Source file path
+        :param path:    Source file path
         :param dest:    Destination field
         """
-        super().__init__(src, dest)
-        self.src  = Field(src)
-        self.dest = Field(dest, default='line')
+        super().__init__(path, field)
+        self.path = Field(path)
+        self.field = Field(field, default='line')
 
     async def target(self, event, pipeline):
         try:
-            with open(await self.src.read(event, pipeline), 'r') as fd:
+            with open(await self.path.read(event, pipeline), 'r') as fd:
                 for chunk in fd.readlines():
                     for line in chunk.splitlines():
-                        yield await self.dest.write(event.derive(), line)
+                        yield await self.field.write(event.derive(), line)
         except Exception:
-            yield event.derive()
+            yield event

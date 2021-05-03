@@ -19,7 +19,11 @@ class EvalFunctions(unittest.TestCase, StreamingCommand):
                     test.misc.field                 = field(unexistent, 42),
                     test.cast.tostring              = tostring(42),
                     test.cast.toint                 = toint('42'),
-                    test.cast.tofloat               = tofloat('42.21')
+                    test.cast.tofloat               = tofloat('42.21'),
+                    test.string.clean               = clean('  sp lit ed   ! '),
+                    test.path.basename              = basename('/one/two/three'),
+                    test.path.dirname               = dirname('/one/two/three'),
+                    test.path.joinpath              = joinpath('one', 'two', 'three'),
             '''),
             expected=[Event({
                 'test': {
@@ -30,6 +34,14 @@ class EvalFunctions(unittest.TestCase, StreamingCommand):
                         'tostring': '42',
                         'toint': 42,
                         'tofloat': 42.21
+                    },
+                    'string': {
+                        'clean': 'splited!'
+                    },
+                    'path': {
+                        'basename': 'three',
+                        'dirname': '/one/two',
+                        'joinpath': 'one/two/three'
                     }
                 }
             })]

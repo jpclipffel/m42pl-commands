@@ -4,8 +4,8 @@ Tests cases for M42PL core commands.
 
 ## How to run the test(s)
 
-* To test all commands: `python -m unittest tests`
-* To test a single command: `python -m unittest tests.<module_name>`
+* To test all commands: `python -m unittest tests/*.py`
+* To test a single command: `python -m unittest tests/test_<command>.py`
 
 ## How the test unit are designed
 

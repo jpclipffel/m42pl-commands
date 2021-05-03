@@ -6,32 +6,30 @@ from m42pl.event import Event
 
 
 class Rename(unittest.TestCase, StreamingCommand):
-    """Test unit for the `rename` command.
+    """Test unit for the `assertion` command.
     """
 
     command_alias = 'rename'
     script_begin = dedent('''\
-        | make showinfo=yes
+        | make count=1 showinfo=yes
     ''')
     expected_success = [
 
         TestScript(
-            name='single_existing_field',
+            name='valid',
             source=dedent('''\
-                | rename chunk as renamed_chunk
+                | assert id == 0
             '''),
             expected=[
                 Event({
-                    'renamed_chunk': {
-                        'chunk': 0,
-                        'chunks': 1
-                    }
+                    'id': 0
                 })
             ],
-            fields_in=['renamed_chunk']
+            fields_in=['id',]
         )
-        
+
     ]
+
 
 
 if __name__ == '__main__':

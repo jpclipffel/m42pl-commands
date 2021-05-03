@@ -12,8 +12,9 @@ class BaseURL(GeneratingCommand):
     """
 
     _syntax_ = (
-        '[url=]<url> [method=<method>] [frequency=<seconds>]'
-        '[count=<integer>]'
+        '[urls=](url, ...) [[method=]{HTTP method}] [[headers]={headers k/v}]'
+        '[[data=]{data k/v}] [[json=]{json k/v}] [[frequency=]{seconds}]'
+        '[[count=]{integer}]'
     )
 
     def __init__(self, urls: list = [], method: str = 'GET',
@@ -21,15 +22,14 @@ class BaseURL(GeneratingCommand):
                     frequency: int = -1, count: int = 1):
         """
         :param urls:        URLs to fetch
-        :param method:      HTTP method ("GET", "POST", ...); Case
-                            insensitive
+        :param method:      HTTP method ("GET", "POST", ...)
         :param headers:     HTTP headers field; Defaults to an empty map
         :param data:        Form field; Should be either `None` or a
                             dict field reference; Defaults to `None`
         :param json:        JSON field; Should be either `None` or a
                             dict field reference; Defaults to `None`
         :param frequency:   Sleep time between each call; Defaults to 
-                            1 (no sleep time)
+                            -1 (no sleep time)
         :param count:       Number of requests to performs; Default to
                             1 (a single request)
         """

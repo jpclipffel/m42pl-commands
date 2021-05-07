@@ -6,8 +6,15 @@ from m42pl.commands import MetaCommand, StreamingCommand, GeneratingCommand
 
 
 class BaseMacro:
-    kvstore_prefix = 'm42pl.macros'
+    kvstore_prefix = 'macros:'
+    kvstore_macros = f'{kvstore_prefix}current'
 
+    def macro_name(self, name: str) -> str:
+        """Returns a full macro name, i.e. with correct prefix.
+
+        :param name:    Macro name as defined by user.
+        """
+        return f'{self.kvstore_prefix}{name}'
 
 class RecordMacro(BaseMacro, MetaCommand):
     """Record (define and save) a global macro.
@@ -28,16 +35,17 @@ class RecordMacro(BaseMacro, MetaCommand):
 
     async def setup(self, event, pipeline):
         # Get macro name
-        name = f'{self.kvstore_prefix}.{await self.name.read(event, pipeline)}'
+        macro_name = self.macro_name(await self.name.read(event, pipeline))
         # Write macro to KVStore
         await pipeline.context.kvstore.write(
-            name,
+            macro_name,
             pipeline.context.pipelines[self.pipeline.name].to_dict()
         )
-        # Add macros to macros map
+        # Write macro reference to KVStore macros list
+        macros = await pipeline.context.kvstore.read(self.kvstore_macros)
         await pipeline.context.kvstore.write(
-            self.kvstore_prefix,
-            await pipeline.context.kvstore.read(self.kvstore_prefix, list()).append(name)
+            self.kvstore_macros,
+            macros or [] + [macro_name,]
         )
 
 
@@ -62,7 +70,7 @@ class RunMacro(BaseMacro, StreamingCommand):
     async def setup(self, event, pipeline):
         self.pipeline = Pipeline.from_dict(
             await pipeline.context.kvstore.read(
-                await self.name.read(event, pipeline)
+                self.macro_name(await self.name.read(event, pipeline))
             )
         )
         self.pipeline.context = pipeline.context
@@ -76,26 +84,36 @@ class GetMacros(BaseMacro, GeneratingCommand):
     """Returns the list of defined macros.
     """
 
-    _about_     = 'Lists the available macros'
+    _about_     = '''Returns available macros (use 'macro' command instead )'''
     _syntax_    = ''
-    _aliases_   = ['_getmacros',]
+    _aliases_   = ['_macrosget',]
 
     async def target(self, event, pipeline):
-        async for 
+        macros = await pipeline.context.kvstore.read(self.kvstore_macros)
+        yield event.derive(data={
+            'macros': [
+                m[len(self.kvstore_prefix):]
+                for m
+                in macros or []
+            ]
+        })
 
 
 class Macro(MetaCommand):
     """Record or run a macro.
     
-    This command returns an instance of :class:`RecordMacro` or
-    :class:`RunMacro` depending on what parameters are given.
+    This command returns an instance of :class:`RecordMacro`,
+    :class:`RunMacro` or :class:`GteMacros` depending on what
+    parameters are given.
     """
-    _about_     = 'Record or run a macro'
-    _syntax_    = '<name> [pipeline]'
-    _aliases_   = ['macro',]
+    _about_     = 'Record a macro, run a macro or return macros list'
+    _syntax_    = '[<name> [pipeline]]'
+    _aliases_   = ['macro', 'macros']
 
     def __new__(self, *args, **kwargs):
         if len(args) > 1 or len(kwargs) > 1 or 'pipeline' in kwargs:
             return RecordMacro(*args, **kwargs)
-        else:
+        elif len(args) == 1 or len(kwargs) == 1:
             return RunMacro(*args, **kwargs)
+        else:
+            return GetMacros()

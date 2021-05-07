@@ -61,13 +61,14 @@ class KVRead(GeneratingCommand):
 
     _about_     = 'Read a KVStore key'
     _aliases_   = ['kvread', 'kv_read']
-    _syntax_    = '<key name> as <field> | <field> = <key name>'
+    _syntax_    = '<key name> | <key name> as <field> | <field> = <key name>'
 
     _grammar_   = OrderedDict(GeneratingCommand._grammar_)
     _grammar_['start'] = dedent('''\
         key     : field
         dest    : field
-        start   : (key "as" dest) | (dest "=" key)
+        kvname  : field
+        start   : (key "as" dest) | (dest "=" key) | kvname
     ''')
 
     class Transformer(GeneratingCommand.Transformer):
@@ -77,8 +78,16 @@ class KVRead(GeneratingCommand):
         def dest(self, items):
             return {'dest': items[0]}
 
+        def kvname(self, items):
+            return {'key': items[0], 'dest': items[0]}
+
         def start(self, items):
-            return (), {**items[0], **items[1]}
+            # If only a kvname is given
+            if len(items) < 2:
+                return (), items[0]
+            # If both a key and dest are given
+            else:
+                return (), {**items[0], **items[1]}
 
     def __init__(self, key: str, dest):
         """

@@ -5,19 +5,18 @@ from m42pl.fields import Field
 
 
 class Expand(StreamingCommand):
-    _about_     = 'Returns one new event per value for the given field'
-    _syntax_    = '[field=]<field name>'
+    """Duplicates an event for each given field's value.
+    """
+
+    _about_     = 'Duplicate event for each value of the given field'
+    _syntax_    = '[field=]{field name}'
     _aliases_   = ['expand', 'mvexpand']
 
     def __init__(self, field: str):
         """
-        :param field:   Field to expand.
+        :param field:   Field to expand on
         """
         super().__init__(field)
-        # ---
-        # Field setup
-        # - If not found, the field is an empty list
-        # - If found, the field is casted to a list
         self.field = Field(field, default=[], seqn=True)
 
     async def target(self, event, pipeline):

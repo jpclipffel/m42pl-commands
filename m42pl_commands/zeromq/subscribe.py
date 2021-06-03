@@ -1,42 +1,48 @@
-from asyncio import sleep
+from __future__ import annotations
+
 import zmq
 
 from m42pl.commands import GeneratingCommand
 from m42pl.fields import Field
 
-from .__base__ import Base
+from .__base__ import Consumer
 
 
-class Subscribe(Base, GeneratingCommand):
+class Subscribe(Consumer):
+    """Receives ZMQ messages and yields events.
+    """
+
     _aliases_   = ['zmq_sub', 'zmq_subscribe']
-    _syntax_    = '[url=]<url> [[topic=]{topic}]'
-    _about_     = 'Receives events from a ZMQ queue and topic'
+    _about_     = 'Subscribe and receive messages from a ZMQ socket'
 
-    def __init__(self, url: str = 'tcp://127.0.0.1:5555', topic: str = 'default', field: str = 'zmq'):
-        super().__init__(url, topic, zmq)
-        self.url = Field(url, default='tcp://127.0.0.1:5555')
-        self.topic = Field(topic, default='default')
-        self.field = Field(field, default='zmq')
+    def __init__(self, topic: str|list = [], *args, **kwargs):
+        super().__init__(*args, topic=topic, **kwargs)
+        # NB: In PUB/SUB, the client socket must subscribe at least to an
+        # empty topic (''), meaning it will receive all messages (no filter).
+        self.args.update(**{
+            'topic': Field(topic, default=['', ], seqn=True)
+        })
 
     async def setup(self, event, pipeline):
-        # Common setup
-        await super().setup(event, pipeline)
-        # Create socket
-        self.socket = self.context.socket(zmq.SUB) # pylint: disable=no-member
-        # Connect socket
-        self.socket.connect(await self.url.read(event, pipeline))
-        self.socket.setsockopt_string(
-            zmq.SUBSCRIBE, # pylint: disable=no-member
-            await self.topic.read(event, pipeline)
-        )
+        await super().setup(zmq.SUB, event, pipeline)
+        # Configure topic (envelope filtering)
+        self.logger.info(f'registering topics: {self.args.topic}')
+        for topic in self.args.topic:
+            self.socket.setsockopt_string(zmq.SUBSCRIBE, topic)
     
     async def target(self, event, pipeline):
         while True:
             try:
-                topic, data = await self.socket.recv_multipart()
-                yield await self.field.write(event.derive(), {
+                frames = await self.socket.recv_multipart()
+                # Try to decode topic as string
+                try:
+                    topic = frames[0].decode()
+                except Exception:
+                    topic = frames[0]
+                # Done
+                yield await self.field.write(event, {
                     'topic': topic,
-                    'data': data
+                    'frames': frames[1:]
                 })
             except Exception:
-                pass
+                raise

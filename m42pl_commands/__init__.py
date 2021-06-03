@@ -9,15 +9,19 @@ from . import mpi
 
 # Control flow
 from . import (
-    ignore, echo, expand, fields, foreach, until, sleep, assertion, 
+    ignore, echo, foreach, until, sleep, assertion, 
     buffer, head, tailf
 )
 
 # Data manipulation
 from . import (
     rename, eval, regex, xpath, jsonpath, stats, jinja, parse_json,
-    msgpack, extract_keyvalues, extract_maps, cut
+    encoding, msgpack, extract_keyvalues, extract_maps, cut,
+    expand, split, fields, wrap, fieldstats
 )
+
+# Data typing
+from . import tags
 
 # Filtering
 from . import where

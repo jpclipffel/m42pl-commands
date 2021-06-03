@@ -1,6 +1,7 @@
 import os
 import json
 
+import m42pl
 from m42pl.fields import Field
 from m42pl.commands import DequeBufferingCommand, MergingCommand
 from m42pl.utils import formatters
@@ -14,13 +15,13 @@ class Output(DequeBufferingCommand, MergingCommand):
     """
 
     _about_     = 'Prints events'
-    _syntax_    = '[[format=](json|raw)] [[buffer=]<number>]'
+    _syntax_    = '[[format=](hjson|raw|...)] [[buffer=]<number>]'
     _aliases_   = ['output', 'print']
 
-    def __init__(self, format: str = 'json', header: bool = False,
+    def __init__(self, format: str = 'hjson', header: bool = False,
                     buffer: int = 0):
         """
-        :param format:  Output format ('json' or 'raw')
+        :param format:  Output format
         :param header:  Display header (`True`) or not (`False`)
         :param buffer:  Buffer max size; Defaults to 1
         """
@@ -48,7 +49,7 @@ class Output(DequeBufferingCommand, MergingCommand):
         if self.header:
             header = f'[{self.counter}] [{event.signature}]'
             print(f'{header} {"-" * (self.term_columns - (len(header)+1))}')
-        print(self.formatter(event))
+        print(self.encoder.encode(event.data))
         self.counter += 1
 
     async def setup(self, event, pipeline):
@@ -62,10 +63,18 @@ class Output(DequeBufferingCommand, MergingCommand):
             await self.buffer.read(event.data, pipeline)
         )
         # Prepare formatter
-        if self.format.lower() == 'json':
-            self.formatter = formatters.HJson(indent=2)
-        else:
-            self.formatter = formatters.Raw()
+        try:
+            self.encoder = m42pl.encoder(self.format)(indent=2)
+        except Exception as error:
+            raise error
+            self.encoder = m42pl.encoder('raw')()
+
+        # if self.format.lower() == 'json':
+        #     print(f'using "json" formatter')
+        #     self.formatter = formatters.JsonTextColor(indent=2)
+        # else:
+        #     print(f'using "raw" formatter')
+        #     self.formatter = formatters.Raw()
 
     async def target(self, pipeline):
         async for event in super().target(pipeline):
@@ -77,10 +86,9 @@ class NoOut(Output):
     """Fake output command.
     """
 
-    _about_     = 'Mimics output syntax but do not prints events'
+    _about_     = 'Mimics output syntax but does not prints events'
     _aliases_   = ['noout', 'nooutput', 'noprint']
 
     async def target(self, pipeline):
-        # pylint: disable=bad-super-call
         async for event in super(Output, self).target(pipeline):
             yield event

@@ -22,7 +22,7 @@ class ExtractMap(StreamingCommand):
         :param headers:     Values keys (names)
         :param prefix:      Values keys prefix (if no or not enough 
                             header provided)
-                            Default to '_N' where N is the key count
+                            Default to 'N' where N is the key count
         :param delim:       Values delimiter regex
                             Defaults to a comma ( , )
         :param dest:        Destination field

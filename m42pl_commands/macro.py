@@ -1,8 +1,9 @@
 import json
 
-from m42pl.pipeline import Pipeline
+from m42pl.pipeline import Pipeline, InfiniteRunner
 from m42pl.fields import Field
 from m42pl.commands import MetaCommand, StreamingCommand, GeneratingCommand
+from m42pl.utils.time import now
 
 
 class BaseMacro:
@@ -16,6 +17,7 @@ class BaseMacro:
         """
         return f'{self.kvstore_prefix}{name}'
 
+
 class RecordMacro(BaseMacro, MetaCommand):
     """Record (define and save) a global macro.
     """
@@ -24,33 +26,48 @@ class RecordMacro(BaseMacro, MetaCommand):
     _syntax_    = '<name> [ ... ]'
     _aliases_   = ['_recordmacro',]
 
-    def __init__(self, name: str, pipeline: str):
+    def __init__(self, name: str, pipeline: str, notes: str = None):
         """
-        :param name:        Macro name.
-        :param pipeline:    Macro pipeline ID.
+        :param name:        Macro name
+        :param pipeline:    Macro pipeline
         """
         super().__init__(name, pipeline)
         self.name = Field(name, default=name)
         self.pipeline = Field(pipeline)
+        self.notes = Field(notes, default='')
 
     async def setup(self, event, pipeline):
         # Get macro name
-        macro_name = self.macro_name(await self.name.read(event, pipeline))
+        macro_name = await self.name.read(event, pipeline)
         # Write macro to KVStore
         await pipeline.context.kvstore.write(
-            macro_name,
+            self.macro_name(macro_name),
             pipeline.context.pipelines[self.pipeline.name].to_dict()
         )
         # Write macro reference to KVStore macros list
-        macros = await pipeline.context.kvstore.read(self.kvstore_macros)
+        # macros = await pipeline.context.kvstore.read(self.kvstore_macros) or []
+        # await pipeline.context.kvstore.write(
+        #     self.kvstore_macros,
+        #     macros + [macro_name,]
+        # )
+        macros = await pipeline.context.kvstore.read(self.kvstore_macros, default={})
         await pipeline.context.kvstore.write(
             self.kvstore_macros,
-            macros or [] + [macro_name,]
+            {
+                **macros,
+                **{
+                    macro_name: {
+                        'notes': await self.notes.read(event, pipeline),
+                        'timestamp': now().timestamp(),
+                        'author': ''
+                    }
+                }
+            }
         )
 
 
 class RunMacro(BaseMacro, StreamingCommand):
-    """Run a macro.
+    """Runs a macro.
 
     This command is returned the command `| macro` (:class:`Macro`)
     when it deduces a macro should be run.
@@ -73,10 +90,16 @@ class RunMacro(BaseMacro, StreamingCommand):
                 self.macro_name(await self.name.read(event, pipeline))
             )
         )
-        self.pipeline.context = pipeline.context
+        # self.pipeline.context = pipeline.context
+        self.runner = InfiniteRunner(
+            self.pipeline,
+            pipeline.context,
+            event
+        )
+        await self.runner.setup()
 
     async def target(self, event, pipeline):
-        async for _event in self.pipeline(event):
+        async for _event in self.runner(event):
             yield _event
 
 
@@ -84,19 +107,55 @@ class GetMacros(BaseMacro, GeneratingCommand):
     """Returns the list of defined macros.
     """
 
-    _about_     = '''Returns available macros (use 'macro' command instead )'''
+    _about_     = 'Returns available macros'
     _syntax_    = ''
-    _aliases_   = ['_macrosget',]
+    _aliases_   = ['macros',]
 
     async def target(self, event, pipeline):
-        macros = await pipeline.context.kvstore.read(self.kvstore_macros)
-        yield event.derive(data={
-            'macros': [
-                m[len(self.kvstore_prefix):]
-                for m
-                in macros or []
-            ]
-        })
+        macros = await pipeline.context.kvstore.read(self.kvstore_macros, default={})
+        for name, macro in macros.items():
+            yield event.derive({
+                'macro': {**{'name': name}, **macro}
+            })
+
+
+class DelMacro(BaseMacro, MetaCommand):
+    """Removes a macro.
+    """
+    _about_     = 'Remove a macro'
+    _syntax_    = '{name}'
+    _aliases_   = ['delmacro',]
+
+    def __init__(self, name: str):
+        """
+        :param name:    Macro name.
+        """
+        super().__init__(name)
+        self.name = Field(name, default=name)
+
+    async def target(self, event, pipeline):
+        macro_name = self.macro_name(await self.name.read(event, pipeline))
+        await pipeline.context.kvstore.remove(
+            macro_name
+        )
+        # Remove macro reference from KVStore macros list
+        macros = await pipeline.context.kvstore.read(self.kvstore_macros) or []
+        await pipeline.context.kvstore.write(
+            self.kvstore_macros,
+            macros.remove(macro_name)
+        )
+
+
+class PurgeMacros(BaseMacro, MetaCommand):
+    """Purges all macros.
+    """
+    _about_     = 'Purges all macros'
+    _syntax_    = ''
+    _aliases_   = ['purgemacro', 'purgemacros']
+
+    async def target(self, event, pipeline):
+        await pipeline.context.kvstore.remove(self.kvstore_prefix)
+        await pipeline.context.kvstore.remove(self.kvstore_macros)
 
 
 class Macro(MetaCommand):
@@ -108,7 +167,7 @@ class Macro(MetaCommand):
     """
     _about_     = 'Record a macro, run a macro or return macros list'
     _syntax_    = '[<name> [pipeline]]'
-    _aliases_   = ['macro', 'macros']
+    _aliases_   = ['macro',]
 
     def __new__(self, *args, **kwargs):
         if len(args) > 1 or len(kwargs) > 1 or 'pipeline' in kwargs:

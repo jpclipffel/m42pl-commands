@@ -4,8 +4,8 @@ from collections import OrderedDict
 from hashlib import blake2b
 
 from m42pl.commands import StreamingCommand, MergingCommand, DequeBufferingCommand
+from m42pl.fields import Field, FieldsMap
 from m42pl.event import Event
-from m42pl.fields import Field
 
 # Stats functors
 # Each stats functions (aka. functors) is defined in its own module.
@@ -28,15 +28,15 @@ class StreamStats(StreamingCommand):
     should update your calculation to take this new event values into
     account.
 
-    To reduce the re-calculation pressure over commands following a
-    `StreamStats`, the `PostStatsBuffer` command is automatically
-    injected in the pipeline after `StreamStats` to keep only the
-    latest iteration of each unique event.
+    To reduce the pressure on commands which follows a `StreamStats`,
+    the `PostStatsBuffer` command is automatically injected in the
+    pipeline after `StreamStats` to keep only the latest iteration of
+    each unique event.
     """
 
     _aliases_ = ['_stream_stats',]
 
-    def __init__(self, functions: list, fields: list):
+    def __init__(self, functions: list, fields: list, **kwargs):
         """
         :param functions:   Aggregation functions list.
                             Ex: `[('function_name', 'source_field', 'dest_field')]`
@@ -67,6 +67,9 @@ class StreamStats(StreamingCommand):
             else:
                 raise Exception(f'Unknown stats function: {function_name}')
 
+    async def setup(self, event, pipeline):
+        await super().setup(event, pipeline)
+
     async def target(self, event, pipeline):
         # ---
         # Create new event which will holds the aggregated values
@@ -85,8 +88,8 @@ class StreamStats(StreamingCommand):
             await field.write(stated_event, value)
         # ---
         # Update source event and new event signatures
-        event.signature = signature.hexdigest()
-        stated_event.signature = signature.hexdigest()
+        event['sign'] = signature.hexdigest()
+        stated_event['sign'] = signature.hexdigest()
         # ---
         # Compute and add the stated fields to the new event
         for field, function in self.stated_fields.items():
@@ -94,7 +97,6 @@ class StreamStats(StreamingCommand):
         # ---
         # Done
         yield stated_event
-
 
 class PreStatsMerge(StreamingCommand, MergingCommand):
     """Merges before running `stats`.
@@ -123,6 +125,12 @@ class PostStatsBuffer(DequeBufferingCommand):
     _aliases_ = ['_post_stats_buffer',]
 
     def __init__(self, buffer: int = 10000, *args, **kwargs):
+        """
+        :param buffer:  Internal buffer size (i.e. the amount of
+                        different event to keep in buffer before
+                        yielding them).
+        """
+        super().__init__(buffer)
         self.buffer_size = Field(buffer, type=int, default=10000)
 
     async def setup(self, event, pipeline):
@@ -132,9 +140,9 @@ class PostStatsBuffer(DequeBufferingCommand):
             maxsize=await self.buffer_size.read(event, pipeline)
         )
 
-    async def target(self, pipeline):
-        async for event in super().target(pipeline):
-            yield event
+    # async def target(self, pipeline):
+    #     async for event in super().target(pipeline):
+    #         yield event
 
 
 class Stats(StreamingCommand):
@@ -142,36 +150,50 @@ class Stats(StreamingCommand):
     """
 
     _about_   = 'Performs statistical operations on an events stream'
-    _syntax_  = '<function> [as <field name>], ... by <field>, ...'
+    _syntax_  = '<function> [as <field>], ... by <field>, ... [with ...]'
     _aliases_ = ['stats', 'aggr', 'aggregate']
 
     _grammar_ = OrderedDict(StreamingCommand._grammar_)
-    _grammar_.pop('collections_rules')
-    _grammar_.pop('arguments_rules')
+    #_grammar_.pop('collections_rules')
+    #_grammar_.pop('arguments_rules')
     _grammar_['stats_rules'] = dedent('''\
-        function_name   : NAME
-        function_body   : ( "(" field? ")" )?
-        function_alias  : ("as" field)?
-        function        : function_name function_body function_alias
-        functions       : (function ","?)+
-        fields          : (field ","?)+
+        stats_function_name     : NAME
+        stats_function_body     : ( "(" field? ")" )?
+        stats_function_alias    : ("as" field)?
+        stats_function          : stats_function_name stats_function_body stats_function_alias
+        stats_functions         : (stats_function ","?)+
+        stats_fields            : (field ","?)+
     ''')
     _grammar_['start'] = dedent('''\
-        start   : functions ("by" fields)?
+        start   : stats_functions ("by" stats_fields)? ("with" kwargs)?
     ''')
 
     class Transformer(StreamingCommand.Transformer):
-        function_name   = lambda self, items: str(items[0])
-        function_body   = lambda self, items: len(items) and str(items[0]) or None
-        function_alias  = lambda self, items: len(items) and str(items[0]) or None
-        function        = tuple
-        functions       = list
-        field           = str
-        fields          = list
-        start           = lambda self, items: (tuple(), {
-                                'functions': items[0],
-                                'fields': len(items) > 1 and items[1] or []
-                            })  # type: ignore
+        stats_function_name     = lambda self, items: str(items[0])
+        stats_function_body     = lambda self, items: len(items) and str(items[0]) or None
+        stats_function_alias    = lambda self, items: len(items) and str(items[0]) or None
+        stats_function          = tuple
+        stats_functions         = list
+        field                   = str
+        stats_fields            = list
+        # start           = lambda self, items: (tuple(), {
+        #                         'functions': items[0],
+        #                         'fields': len(items) > 1 and items[1] or []
+        #                     })
+        
+        def start(self, items):
+            # print(f'stats --> {items}')
+            kwargs = {}
+            if len(items) > 2:
+                for kwarg in items[2]:
+                    kwargs.update(kwarg)
+            return (), {
+                **{
+                    'functions': items[0],
+                    'fields': len(items) > 1 and items[1] or []
+                },
+                **kwargs
+            }
 
     def __new__(cls, *args, **kwargs):
         """Builds and returns the stats commands chain.
@@ -191,5 +213,5 @@ class Stats(StreamingCommand):
             PreStatsMerge(),
             StreamStats(*args, **kwargs),
             # PostStatsMerge(),
-            PostStatsBuffer()
+            PostStatsBuffer(**kwargs)
         )

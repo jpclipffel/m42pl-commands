@@ -17,7 +17,7 @@ from . import (
 from . import (
     rename, eval, regex, xpath, jsonpath, stats, jinja, parse_json,
     encoding, msgpack, extract_keyvalues, extract_maps, cut,
-    expand, split, fields, wrap, fieldstats
+    expand, split, fields, wrap, fieldstats, binset
 )
 
 # Data typing
@@ -36,7 +36,7 @@ from . import writefile
 from . import url
 
 # Server
-from . import http_server
+from . import http_server, server
 
 # ZMQ
 from . import zeromq

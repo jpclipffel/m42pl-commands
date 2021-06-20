@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 import m42pl.commands
-from m42pl.event import Event
+from m42pl.event import derive
 from m42pl.fields import Field
 import m42pl
 
@@ -44,7 +44,7 @@ class MPLCommands(m42pl.commands.GeneratingCommand):
             source = m42pl.commands.ALIASES
         # ---
         for alias, command in source.items():
-            yield event.derive(data={
+            yield derive(event, data={
                 'command': {
                     'alias': alias,
                     'aliases': command._aliases_,

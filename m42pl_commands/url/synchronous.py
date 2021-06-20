@@ -50,7 +50,7 @@ class URL(BaseURL):
             # ---
             # Generate and yield event
             # yield Event(data={
-            event.data.update({
+            event['data'].update({
                 'time': time.time_ns(),
                 'source': fields.url,
                 'request': {

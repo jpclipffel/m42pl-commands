@@ -47,9 +47,9 @@ class Output(DequeBufferingCommand, MergingCommand):
         :param event:   Event to print.
         """
         if self.header:
-            header = f'[{self.counter}] [{event.signature}]'
+            header = f'[{self.counter}] [{event["sign"]}]'
             print(f'{header} {"-" * (self.term_columns - (len(header)+1))}')
-        print(self.encoder.encode(event.data))
+        print(self.encoder.encode(event['data']))
         self.counter += 1
 
     async def setup(self, event, pipeline):
@@ -60,7 +60,7 @@ class Output(DequeBufferingCommand, MergingCommand):
         await super().setup(
             event,
             pipeline, 
-            await self.buffer.read(event.data, pipeline)
+            await self.buffer.read(event, pipeline)
         )
         # Prepare formatter
         try:

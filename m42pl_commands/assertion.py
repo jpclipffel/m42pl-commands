@@ -27,6 +27,6 @@ class Assertion(StreamingCommand):
         self.expr = Evaluator(expression)
 
     async def target(self, event, piepline):
-        if not self.expr(event.data):
+        if not self.expr(event['data']):
             raise Exception('assertion failed')
         yield event

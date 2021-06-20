@@ -28,18 +28,6 @@ class Push(Producer):
     async def setup(self, event, pipeline):
         await super().setup(zmq.PUSH, event, pipeline)
 
-    # async def get_payload(self, event, pipeline) -> str|bytes:
-    #     # Select data
-    #     if self.field:
-    #         data = await self.field.read(event, pipeline)
-    #     else:
-    #         data = event.data
-    #     # Encode and return data if not bytes or str
-    #     if not isinstance(data, (str, bytes)):
-    #         return self.encoder.encode(data)
-    #     # Return data
-    #     return data
-
     async def build_frames(self, event, pipeline) -> List[str|bytes]:
         """Returns a list of frames to be sent through ZMQ.
         """
@@ -47,7 +35,7 @@ class Push(Producer):
         for field in await self.fields.read(event, pipeline):
             frames.append(self.encode(field))
         else:
-            frames.append(self.encode(event.data))
+            frames.append(self.encode(event['data']))
         return frames
 
     async def target(self, event, pipeline):

@@ -2,6 +2,7 @@ from copy import deepcopy
 
 from m42pl.commands import StreamingCommand
 from m42pl.fields import Field
+from m42pl.event import derive
 
 
 class Expand(StreamingCommand):
@@ -21,4 +22,4 @@ class Expand(StreamingCommand):
 
     async def target(self, event, pipeline):
         for item in await self.field.read(event):
-            yield await self.field.write(event.derive(), item)
+            yield await self.field.write(derive(event), item)

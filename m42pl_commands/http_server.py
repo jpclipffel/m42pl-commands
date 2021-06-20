@@ -20,12 +20,12 @@ class HTTPServer(GeneratingCommand):
         '''[[host=]{host}] [[port]={port}] (<pipeline> '''
         '''| with 'method' on 'path' = <pipeline>, ...)'''
     )
-    _aliases_   = ['http-server', 'http_server']
+    _aliases_   = ['http_server', 'server_http']
     _grammar_   = OrderedDict(GeneratingCommand._grammar_)
     _grammar_['start'] = dedent('''\
         rule    : STRING "on" field "=" piperef
         rules   : "with" rule (","? rule)*
-        start   : arguments (piperef | rules)
+        start   : arguments? (piperef | rules)
     ''')
 
     class Transformer(GeneratingCommand.Transformer):
@@ -37,12 +37,24 @@ class HTTPServer(GeneratingCommand):
             return items
 
         def start(self, items):
-            args = items[0][0]
-            kwargs = items[0][1]
-            if isinstance(items[1], list):
-                kwargs['rules'] = items[1]
+            args = []
+            kwargs = {}
+            # No argument is given
+            if len(items) == 1:
+                rulepos = 0
+            # Some arguments are given
+            elif len(items) > 1:
+                args = items[0][0]
+                kwargs = items[0][1]
+                rulepos = 1
+            # ---
+            # Set of rules
+            if isinstance(items[rulepos], list):
+                kwargs['rules'] = items[rulepos]
+            # Single rule
             else:
-                kwargs['piperef'] = items[1][1:]
+                kwargs['piperef'] = items[rulepos]
+            # ---
             return args, kwargs
 
     async def create_handler(self, pipeline, piperef):
@@ -73,7 +85,7 @@ class HTTPServer(GeneratingCommand):
                     'content_type': request.content_type,
                     'content_length': request.content_length
                 })):
-                    resp.append(next_event.data)
+                    resp.append(next_event['data'])
                 if len(resp) == 0:
                     return web.Response(text='{}')
                 elif len(resp) == 1:

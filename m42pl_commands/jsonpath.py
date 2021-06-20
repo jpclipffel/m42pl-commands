@@ -37,7 +37,7 @@ class JSONPath(StreamingCommand):
         field = await self.src.read(event, pipeline)
         # Match JSONPath
         if not field:
-            matched = self.jspath.find(event.data)
+            matched = self.jspath.find(event['data'])
         elif isinstance(field, dict):
             matched = self.jspath.find(field)
         elif isinstance(field, str):

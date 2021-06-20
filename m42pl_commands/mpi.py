@@ -2,7 +2,6 @@ from multiprocessing.queues import Queue
 from multiprocessing.connection import Connection
 
 import m42pl
-from m42pl.event import Event
 from m42pl.commands import StreamingCommand, GeneratingCommand
 
 from typing import Any, Union
@@ -38,22 +37,22 @@ class MPIBase:
     def read_pipe(self) -> bytes:
         """Receives data from a pipe's connection.
         """
-        return self.chan.recv_bytes()
+        return self.chan.recv_bytes() # type: ignore
     
     def write_pipe(self, data: Any):
         """Sends data to a pipe's connection.
         """
-        return self.chan.send_bytes(data)
+        return self.chan.send_bytes(data) # type: ignore
     
     def read_queue(self) -> bytes:
         """Receives data from a queue.
         """
-        return self.chan.get()
+        return self.chan.get() # type: ignore
     
     def write_queue(self, data: Any):
         """Sends data to a queue.
         """
-        return self.chan.put(data)
+        return self.chan.put(data) # type: ignore
 
 
 class MPISend(MPIBase, StreamingCommand):
@@ -68,7 +67,11 @@ class MPISend(MPIBase, StreamingCommand):
         self = super(MPISend, cls).__new__(cls)
         self.__init__(*args, **kwargs)
         return (
-            m42pl.command('msgpack')(dest_field=self.msgpack_field),
+            # m42pl.command('msgpack')(dest_field=self.msgpack_field),
+            m42pl.command('encode')(
+                codec='msgpack',
+                dest=self.msgpack_field
+            ),
             self
         )
     
@@ -80,7 +83,7 @@ class MPISend(MPIBase, StreamingCommand):
 
     async def target(self, event, pipeline):
         try:
-            self.write(event.data[self.msgpack_field])
+            self.write(event['data'][self.msgpack_field])
         except Exception as error:
             self.logger.exception(error)
             pass
@@ -89,6 +92,7 @@ class MPISend(MPIBase, StreamingCommand):
     async def __aexit__(self, *args, **kwargs):
         """Sends a sentinel event at the pipeline's end.
         """
+        self.logger.info(f'sending sentinel event')
         self.write(self.chunk)
 
 
@@ -108,7 +112,11 @@ class MPIReceive(MPIBase, GeneratingCommand):
         self.__init__(*args, **kwargs)
         return (
             self,
-            m42pl.command('msgunpack')(src_field=self.msgpack_field)
+            # m42pl.command('msgunpack')(src_field=self.msgpack_field)
+            m42pl.command('decode')(
+                codec='msgpack',
+                src=self.msgpack_field
+            )
         )
     
     def __init__(self, chan: Channel):
@@ -126,17 +134,23 @@ class MPIReceive(MPIBase, GeneratingCommand):
                 # If data is a sentinel event (a tuple of two integers),
                 # update and check producers status
                 if isinstance(data, tuple) and len(data) == 2:
+                    print(f'received sentinel event')
                     if data[1] > self.producers_count:
                         self.producers_count = data[1]
                     self.producers_closed += 1
                     if (self.producers_closed > 0 and self.producers_count > 0 
                         and self.producers_closed == self.producers_count):
+                        print(f'sentinel ==> close !')
                         return
                 # Otherwise, process event
                 elif data:
-                    yield Event(data={
-                        self.msgpack_field: data
-                    })
+                    yield {
+                        'data': {
+                            self.msgpack_field: data
+                        },
+                        'meta': {},
+                        'sign': None
+                    }
             except EOFError:
                 self.logger.info(f'Channel has been closed')
                 break

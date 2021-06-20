@@ -2,7 +2,7 @@ from collections import OrderedDict
 from textwrap import dedent
 
 from m42pl.commands import GeneratingCommand
-from m42pl.event import Event
+from m42pl.event import Event, derive
 from m42pl.fields import Field
 
 
@@ -33,6 +33,6 @@ class ReadFile(GeneratingCommand):
     async def target(self, event, pipeline):
         try:
             with open(await self.path.read(event, pipeline), 'r') as fd:
-                yield await self.field.write(event.derive(), fd.read())
+                yield await self.field.write(derive(event), fd.read())
         except Exception as _error:
             yield event

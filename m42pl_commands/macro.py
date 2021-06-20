@@ -114,7 +114,7 @@ class GetMacros(BaseMacro, GeneratingCommand):
     async def target(self, event, pipeline):
         macros = await pipeline.context.kvstore.read(self.kvstore_macros, default={})
         for name, macro in macros.items():
-            yield event.derive({
+            yield derive(event, {
                 'macro': {**{'name': name}, **macro}
             })
 

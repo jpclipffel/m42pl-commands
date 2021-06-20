@@ -58,7 +58,8 @@ class Publish(Producer):
         for field in await self.fields.read(event, pipeline):
             frames.append(self.encode(field))
         else:
-            frames.append(self.encode(event.data))
+            frames.append(self.encode(event['data']))
+            # frames.append(self.encode(event))
         return frames
 
     async def target(self, event, pipeline):

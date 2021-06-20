@@ -1,3 +1,5 @@
+from m42pl.event import signature
+
 from .__base__ import StatsFunction
 
 
@@ -7,9 +9,9 @@ class Count(StatsFunction):
     
     async def target(self, event, dataset, pipeline):
         if not isinstance(dataset, dict):
-            return ({event.signature: 1}, 1)
-        if event.signature not in dataset:
-            dataset[event.signature] = 1
+            return ({signature(event): 1}, 1)
+        if signature(event) not in dataset:
+            dataset[signature(event)] = 1
         else:
-            dataset[event.signature] += 1
-        return (dataset, dataset[event.signature])
+            dataset[signature(event)] += 1
+        return (dataset, dataset[signature(event)])

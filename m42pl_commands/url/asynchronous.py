@@ -4,7 +4,7 @@ import aiohttp
 import regex
 import cgi
 
-from m42pl.event import Event
+from m42pl.event import derive
 
 from .__base__ import BaseURL
 
@@ -107,7 +107,7 @@ class URL(BaseURL):
                             }))
                 # Execute requests and yield them as soon as possible
                 for request in asyncio.as_completed(requests):
-                    yield event.derive(data=await request)
+                    yield derive(event, data=await request)
                 # Wait before next requests batch
                 if fields.frequency > 0:
                     await asyncio.sleep(fields.frequency)

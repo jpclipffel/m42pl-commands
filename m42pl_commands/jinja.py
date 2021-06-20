@@ -43,7 +43,7 @@ class Jinja(StreamingCommand):
         try:
             yield await self.dest_field.write(
                 event,
-                self.jinja_env.from_string(await self.src_field.read(event, pipeline)).render(**event.data)
+                self.jinja_env.from_string(await self.src_field.read(event, pipeline)).render(**event['data'])
             )
         except Exception as error:
             self.logger.error(error)

@@ -39,7 +39,7 @@ class Eval(StreamingCommand):
     async def target(self, event, pipeline):
         for field, expr in self.fields.items():
             try:
-                await field.write(event, expr(event.data))
+                await field.write(event, expr(event['data']))
             except Exception as error:
                 self.logger.error(error)
                 await field.write(event, None)

@@ -1,5 +1,5 @@
 from m42pl.commands import GeneratingCommand
-from m42pl.event import Event
+from m42pl.event import Event, derive
 from m42pl.fields import Field
 
 
@@ -22,6 +22,6 @@ class ReadLines(GeneratingCommand):
             with open(await self.path.read(event, pipeline), 'r') as fd:
                 for chunk in fd.readlines():
                     for line in chunk.splitlines():
-                        yield await self.field.write(event.derive(), line)
+                        yield await self.field.write(derive(event), line)
         except Exception:
             yield event

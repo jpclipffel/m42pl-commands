@@ -44,5 +44,10 @@ class Subscribe(Consumer):
                     'topic': topic,
                     'frames': frames[1:]
                 })
+                # Done
+                # yield {
+                #     'topic': topic,
+                #     'frames': frames[1:]
+                # }
             except Exception:
                 raise

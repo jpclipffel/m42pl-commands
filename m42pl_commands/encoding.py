@@ -4,7 +4,7 @@ from textwrap import dedent
 import m42pl
 from m42pl.commands import StreamingCommand
 from m42pl.fields import Field
-from m42pl.event import Event
+from m42pl.event import derive
 
 
 class Base(StreamingCommand):
@@ -76,7 +76,7 @@ class Encode(Base):
         else:
             yield await self.dest.write(
                 event,
-                self.encoder.encode(event.data)
+                self.encoder.encode(event['data'])
             )
 
 
@@ -96,8 +96,12 @@ class Decode(Base):
                 self.encoder.decode(await self.src.read(event, pipeline))
             )
         else:
-            yield event.derive(
+            yield derive(
+                event,
                 data=self.encoder.decode(
                     await self.src.read(event, pipeline)
                 )
             )
+        # yield {
+        #     'data': self.encoder.decode(event['frames'][0])
+        # }

@@ -24,7 +24,7 @@ class Where(StreamingCommand):
 
     async def target(self, event, piepline):
         try:
-            if self.expr(event.data):
+            if self.expr(event['data']):
                 yield event
         except Exception:
             raise

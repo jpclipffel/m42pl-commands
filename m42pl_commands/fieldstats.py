@@ -11,7 +11,7 @@ class FieldStats(BufferingCommand):
         self.stats = {}
 
     async def setup(self, event, pipeline):
-        await super().setup(event, pipeline, maxsize=100000)
+        await super().setup(event, pipeline, maxsize=100)
 
     def stats_key(self, key, value):
         if not isinstance(value, dict):
@@ -26,5 +26,5 @@ class FieldStats(BufferingCommand):
 
     async def target(self, pipeline):
         async for event in super().target(pipeline):
-            self.stats_key('', event.data)
+            self.stats_key('', event['data'])
         yield Event(data=self.stats)

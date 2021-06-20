@@ -4,7 +4,6 @@ import msgpack
 
 from m42pl.commands import StreamingCommand
 from m42pl.fields import Field
-from m42pl.event import Event
 
 
 class MsgPack(StreamingCommand):
@@ -48,7 +47,7 @@ class Pack(MsgPack):
             event,
             msgpack.packb(
                 self.src_field and (await self.src_field.read(event, pipeline))
-                or event.data
+                or event['data']
             )
         )
 
@@ -67,9 +66,12 @@ class Unpack(MsgPack):
         self.dest_field = dest_field and Field(dest_field, default='unpacked') or None
 
     async def target(self, event, pipeline):
+        data = await self.src_field.read(event, pipeline)
+        print(f'msgunpack --> data --> {data}')
+
         unpacked = msgpack.unpackb(await self.src_field.read(event, pipeline))
         if self.dest_field:
             yield await self.dest_field.write(event, unpacked)
         elif isinstance(unpacked, dict):
-            event.data = unpacked
+            event['data'] = unpacked
             yield event

@@ -1,7 +1,7 @@
 from asyncio import sleep
 
 from m42pl.commands import GeneratingCommand
-from m42pl.event import Event
+from m42pl.event import Event, derive
 from m42pl.fields import Field, FieldsMap
 
 
@@ -53,7 +53,8 @@ class Make(GeneratingCommand):
 
     async def target(self, event, pipeline):
         for i in range(self.begin_count, self.end_count):
-            yield event.derive(
+            yield derive(
+                event,
                 self.fields.showinfo and {
                     'id': i,
                     'chunk': {

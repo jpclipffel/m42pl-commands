@@ -48,7 +48,7 @@ class Fields(StreamingCommand):
         # WTF: Creating a new event without `data={}` uses current
         # event's data.
         # TODO: Debug and resolve issue
-        _event = Event(data={}, signature=event.signature)
+        _event = Event(data={}, sign=event['sign'])
         for field in self.fields:
             _event = await field.write(_event, await field.read(event))
         return _event

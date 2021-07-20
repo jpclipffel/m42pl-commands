@@ -213,5 +213,5 @@ class Stats(StreamingCommand):
             PreStatsMerge(),
             StreamStats(*args, **kwargs),
             # PostStatsMerge(),
-            PostStatsBuffer(**kwargs)
+            # PostStatsBuffer(**kwargs)
         )

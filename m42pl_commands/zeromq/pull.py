@@ -25,7 +25,8 @@ class Pull(Consumer):
         while True:
             try:
                 yield await self.field.write(event, {
-                    'frames': await self.socket.recv_multipart()
+                    'frames': await self.socket.recv_multipart(),
+                    'chunk': self.chunk
                 })
             except Exception:
                 raise

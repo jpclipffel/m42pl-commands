@@ -22,4 +22,4 @@ class Head(StreamingCommand):
             self.count -= 1
             yield event
         else:
-            pipeline.stop()
+            yield None

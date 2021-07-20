@@ -17,7 +17,7 @@ from . import (
 from . import (
     rename, eval, regex, xpath, jsonpath, stats, jinja, parse_json,
     encoding, msgpack, extract_keyvalues, extract_maps, cut,
-    expand, split, fields, wrap, fieldstats, binset
+    expand, split, fields, wrap, fieldstats, binset, grok
 )
 
 # Data typing

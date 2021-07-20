@@ -58,7 +58,7 @@ class HTTPServer(GeneratingCommand):
             return args, kwargs
 
     async def create_handler(self, pipeline, piperef):
-        """Returns an AIOHTTP handler from a function template.
+        """Instanciates, setups and returns an AIOHTTP handler.
 
         :param pipeline:    Current pipeline
         :param piperef:     Handler's pipeline reference
@@ -66,10 +66,20 @@ class HTTPServer(GeneratingCommand):
         """
 
         class Handler:
+            """AIOHTTP handler.
+            """
+
             def __init__(self, runner):
+                """
+                :param runner:  Pipeline runner.
+                """
                 self.runner = runner
 
             async def __call__(self, request):
+                """Handles an AIOHTTP request.
+
+                :param request: AIOHTTP request.
+                """
                 try:
                     jsdata = await request.json()
                 except Exception:
@@ -93,6 +103,7 @@ class HTTPServer(GeneratingCommand):
                 else:
                     return web.Response(text=json.dumps(resp))
 
+        # Create and setup the handler pipeline runner
         runner = InfiniteRunner(
             pipeline.context.pipelines[piperef],
             pipeline.context,
@@ -100,7 +111,7 @@ class HTTPServer(GeneratingCommand):
         )
         await runner.setup()
 
-        # return handler
+        # Create and return handler
         return Handler(runner)
 
 

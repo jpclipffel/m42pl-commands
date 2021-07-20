@@ -8,6 +8,14 @@ class Cut(StreamingCommand):
     _about_     = 'Cut (split) a field using a regular expression'
     _syntax_    = '[field=]{field} [expr=]<regex> [[clean=]<yes|no>]'
     _aliases_   = ['cut', 'split']
+    _schema_    = {
+        'properties': {
+            '{field}': {
+                'type': 'array',
+                'description': 'Cut field'
+            }
+        }
+    }
 
     def __init__(self, field, expr: str, clean: bool = True):
         """

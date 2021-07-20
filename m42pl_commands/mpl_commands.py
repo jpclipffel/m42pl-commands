@@ -10,6 +10,22 @@ class MPLCommands(m42pl.commands.GeneratingCommand):
     _about_     = 'Returns the list of available commands'
     _syntax_    = '[[command=]command_name] [[ebnf=]yes|no]'
     _aliases_   = ['mpl_commands', 'mpl_command', 'commands', 'command']
+    _schema_    = {
+        'properties': {
+            'command': {
+                'type': 'object',
+                'properties': {
+                    'alias': {},
+                    'aliases': {},
+                    'schema': {},
+                    'about': {},
+                    'syntax': {},
+                    'type': {},
+                    'ebnf': {}
+                }
+            }
+        }
+    }
     
     types = [
         m42pl.commands.GeneratingCommand,
@@ -48,6 +64,7 @@ class MPLCommands(m42pl.commands.GeneratingCommand):
                 'command': {
                     'alias': alias,
                     'aliases': command._aliases_,
+                    'schema': command._schema_,
                     'about': command._about_,
                     'syntax': command._syntax_,
                     'type': list(filter(None, map(lambda t: issubclass(command, t) and t.__name__ or None, self.types)))[0],

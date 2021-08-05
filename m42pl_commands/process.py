@@ -21,17 +21,17 @@ class Process(GeneratingCommand):
             if len(items) and len(items[0]):
                 return (), {
                     'command': items[0][0],
-                    'args': len(items[0]) > 1 and items[0][1:] or []
+                    'params': len(items[0]) > 1 and items[0][1:] or []
                 }
 
-    def __init__(self, command: str, args: list = []):
+    def __init__(self, command: str, params: list = []):
         """
         :param command: Command name  (e.g. 'ls')
         :param args:    Command arguments
         """
-        super().__init__(self, command, args)
-        self.command = Field(command)
-        self.args = [ Field(arg) for arg in args ]
+        super().__init__(self, command, params)
+        self.command = Field(command, default=command)
+        self.args = [ Field(param) for param in params ]
 
     async def target(self, event, pipeline):
         cmd = await self.command.read(event, pipeline)

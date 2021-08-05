@@ -1,19 +1,25 @@
-import json
-
 from m42pl.pipeline import Pipeline, InfiniteRunner
+from m42pl.event import derive
 from m42pl.fields import Field
 from m42pl.commands import MetaCommand, StreamingCommand, GeneratingCommand
 from m42pl.utils.time import now
+from m42pl.errors import CommandError
 
 
 class BaseMacro:
-    kvstore_prefix = 'macros:'
-    kvstore_macros = f'{kvstore_prefix}current'
+    """Base macros-related command class.
 
-    def macro_name(self, name: str) -> str:
+    :ivar kvstore_prefix:   KVStore keys prefix
+    :ivar macros_index:     List of macros in the KVStore 
+    """
+
+    kvstore_prefix = 'macros:'
+    macros_index = f'{kvstore_prefix}current'
+
+    def macro_fqdn(self, name: str) -> str:
         """Returns a full macro name, i.e. with correct prefix.
 
-        :param name:    Macro name as defined by user.
+        :param name:    Macro name as defined by user
         """
         return f'{self.kvstore_prefix}{name}'
 
@@ -23,13 +29,14 @@ class RecordMacro(BaseMacro, MetaCommand):
     """
 
     _about_     = '''Record a global macro (use the 'macro' command instead)'''
-    _syntax_    = '<name> [ ... ]'
+    _syntax_    = '<name> [ ... ] [notes]'
     _aliases_   = ['_recordmacro',]
 
     def __init__(self, name: str, pipeline: str, notes: str = None):
         """
         :param name:        Macro name
         :param pipeline:    Macro pipeline
+        :param notes:       Macro's notes
         """
         super().__init__(name, pipeline)
         self.name = Field(name, default=name)
@@ -41,18 +48,18 @@ class RecordMacro(BaseMacro, MetaCommand):
         macro_name = await self.name.read(event, pipeline)
         # Write macro to KVStore
         await pipeline.context.kvstore.write(
-            self.macro_name(macro_name),
+            self.macro_fqdn(macro_name),
             pipeline.context.pipelines[self.pipeline.name].to_dict()
         )
         # Write macro reference to KVStore macros list
-        # macros = await pipeline.context.kvstore.read(self.kvstore_macros) or []
+        # macros = await pipeline.context.kvstore.read(self.macros_index) or []
         # await pipeline.context.kvstore.write(
-        #     self.kvstore_macros,
+        #     self.macros_index,
         #     macros + [macro_name,]
         # )
-        macros = await pipeline.context.kvstore.read(self.kvstore_macros, default={})
+        macros = await pipeline.context.kvstore.read(self.macros_index, default={})
         await pipeline.context.kvstore.write(
-            self.kvstore_macros,
+            self.macros_index,
             {
                 **macros,
                 **{
@@ -74,23 +81,33 @@ class RunMacro(BaseMacro, StreamingCommand):
     """
 
     _about_     = '''Run a macro (use 'macro' command instead )'''
-    _syntax_    = '<name>'
+    _syntax_    = '[name=]<name> [{field}=<value>, ...]'
     _aliases_   = ['_macrorun', ]
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, **kwargs):
         """
         :param name:    Macro name.
         """
         super().__init__(name)
         self.name = Field(name, default=name)
+        self.kwargs = kwargs
 
     async def setup(self, event, pipeline):
-        self.pipeline = Pipeline.from_dict(
-            await pipeline.context.kvstore.read(
-                self.macro_name(await self.name.read(event, pipeline))
+        macro_name = await self.name.read(event, pipeline)
+        macro_fqdn = self.macro_fqdn(macro_name)
+        macro_dict = await pipeline.context.kvstore.read(macro_fqdn)
+        if macro_dict is None:
+            raise CommandError(
+                self,
+                f'requested macro "{macro_name}" not found: macro_fqdn="{macro_fqdn}"'
             )
+        # Init macro
+        self.pipeline = Pipeline.from_dict(
+            macro_dict
         )
-        # self.pipeline.context = pipeline.context
+        # Init macro event
+        event['data'].update(self.kwargs)
+        # Init runner
         self.runner = InfiniteRunner(
             self.pipeline,
             pipeline.context,
@@ -111,12 +128,15 @@ class GetMacros(BaseMacro, GeneratingCommand):
     _syntax_    = ''
     _aliases_   = ['macros',]
 
+    key_name    = 'macro'
+
     async def target(self, event, pipeline):
-        macros = await pipeline.context.kvstore.read(self.kvstore_macros, default={})
+        macros = await pipeline.context.kvstore.read(self.macros_index, default={})
         for name, macro in macros.items():
-            yield derive(event, {
-                'macro': {**{'name': name}, **macro}
-            })
+            if macro:
+                yield derive(event, {
+                    self.key_name: {**{'name': name}, **macro}
+                })
 
 
 class DelMacro(BaseMacro, MetaCommand):
@@ -134,15 +154,17 @@ class DelMacro(BaseMacro, MetaCommand):
         self.name = Field(name, default=name)
 
     async def target(self, event, pipeline):
-        macro_name = self.macro_name(await self.name.read(event, pipeline))
+        macro_name = await self.name.read(event, pipeline)
+        # Remove macro from KVStore
         await pipeline.context.kvstore.remove(
-            macro_name
+            self.macro_fqdn(macro_name)
         )
         # Remove macro reference from KVStore macros list
-        macros = await pipeline.context.kvstore.read(self.kvstore_macros) or []
+        macros = await pipeline.context.kvstore.read(self.macros_index, default={})
+        macros.pop(macro_name)
         await pipeline.context.kvstore.write(
-            self.kvstore_macros,
-            macros.remove(macro_name)
+            self.macros_index,
+            macros
         )
 
 
@@ -155,7 +177,7 @@ class PurgeMacros(BaseMacro, MetaCommand):
 
     async def target(self, event, pipeline):
         await pipeline.context.kvstore.remove(self.kvstore_prefix)
-        await pipeline.context.kvstore.remove(self.kvstore_macros)
+        await pipeline.context.kvstore.remove(self.macros_index)
 
 
 class Macro(MetaCommand):

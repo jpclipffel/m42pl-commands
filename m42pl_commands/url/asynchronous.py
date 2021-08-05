@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 import asyncio
 import aiohttp
@@ -24,7 +26,8 @@ class URL(BaseURL):
         super().__init__(*args, **kwargs)
 
     async def read_response(self, response: aiohttp.ClientResponse,
-                            mime_type: str, charset: str, **kwargs):
+                            mime_type: str|None = None,
+                            charset: str|None = None, **kwargs):
         """Read and decodes the given :param:`response`.
 
         :param response:    Partial response sent by server
@@ -72,8 +75,7 @@ class URL(BaseURL):
                     'headers': dict(response.headers),
                     'content': await self.read_response(
                         response,
-                        mime_type,
-                        mime_props
+                        mime_type
                     )
                 }
             }

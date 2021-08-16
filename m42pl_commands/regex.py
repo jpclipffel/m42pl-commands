@@ -1,14 +1,36 @@
 import regex
+from collections import OrderedDict
+from textwrap import dedent
 
 from m42pl.commands import StreamingCommand
 from m42pl.fields import Field
 
 
 class Regex(StreamingCommand):
-    _about_   = 'Parse a source field using a regular expression with named groups'
-    _syntax_  = '[expression=]<regex> [src=]<source_field> [[dest=]<dest_field>] [[update=](yes|no)]'
+    _about_   = 'Parse a field with a regular expression'
+    _syntax_  = '{src} with <regular expression> [as|to {dest}]'
     _aliases_ = ['regex', 'rex', 'rx']
-    
+    _schema_    = {
+        'properties': {
+            '{dest}': {
+                'type': 'object'
+            }
+        }
+    }
+
+    _grammar_ = OrderedDict(StreamingCommand._grammar_)
+    _grammar_['start'] = dedent('''\
+        start:  field "with" field (("as"|"to") field)?
+    ''')
+
+    class Transformer(StreamingCommand.Transformer):
+        def start(self, items):
+            return (), {
+                'expression': items[1],
+                'src': items[0],
+                'dest': len(items) > 2 and items[2] or None,
+            }
+
     def __init__(self, expression: str, src: str, dest: str = None,
                     update: bool = False):
         """

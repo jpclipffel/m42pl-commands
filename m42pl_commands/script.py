@@ -87,7 +87,7 @@ class Script(Command):
         if len(source) >= 2 and source[0:2] != "/*" and source[0] != '|':
             source = f'| {source}'
         # ---
-        # Parse and transform source.
+        # Parse and transform source
         try:
             return self._transformer_.transform(
                 self._parser_.parse(source)

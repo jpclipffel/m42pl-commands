@@ -1,6 +1,6 @@
 from m42pl.pipeline import Pipeline, InfiniteRunner
 from m42pl.event import derive
-from m42pl.fields import Field
+from m42pl.fields import Field, FieldsMap
 from m42pl.commands import MetaCommand, StreamingCommand, GeneratingCommand
 from m42pl.utils.time import now
 from m42pl.errors import CommandError
@@ -46,10 +46,12 @@ class RecordMacro(BaseMacro, MetaCommand):
     async def setup(self, event, pipeline):
         # Get macro name
         macro_name = await self.name.read(event, pipeline)
+        # Renders macros dict
+        macro_dict = pipeline.context.pipelines[self.pipeline.name].to_dict()
         # Write macro to KVStore
         await pipeline.context.kvstore.write(
             self.macro_fqdn(macro_name),
-            pipeline.context.pipelines[self.pipeline.name].to_dict()
+            macro_dict
         )
         # Write macro reference to KVStore macros list
         # macros = await pipeline.context.kvstore.read(self.macros_index) or []
@@ -66,7 +68,8 @@ class RecordMacro(BaseMacro, MetaCommand):
                     macro_name: {
                         'notes': await self.notes.read(event, pipeline),
                         'timestamp': now().timestamp(),
-                        'author': ''
+                        'author': '',
+                        'json': macro_dict
                     }
                 }
             }
@@ -90,7 +93,11 @@ class RunMacro(BaseMacro, StreamingCommand):
         """
         super().__init__(name)
         self.name = Field(name, default=name)
-        self.kwargs = kwargs
+        self.params = FieldsMap(**dict([
+            (name, Field(field))
+            for name, field
+            in kwargs.items()]
+        ))
 
     async def setup(self, event, pipeline):
         macro_name = await self.name.read(event, pipeline)
@@ -106,7 +113,8 @@ class RunMacro(BaseMacro, StreamingCommand):
             macro_dict
         )
         # Init macro event
-        event['data'].update(self.kwargs)
+        self.params = await self.params.read(event, pipeline)
+        event['data'].update(self.params.__dict__)
         # Init runner
         self.runner = InfiniteRunner(
             self.pipeline,
@@ -151,7 +159,7 @@ class DelMacro(BaseMacro, MetaCommand):
         :param name:    Macro name.
         """
         super().__init__(name)
-        self.name = Field(name, default=name)
+        self.name = Field(name, default=name, seqn=True)
 
     async def target(self, event, pipeline):
         macro_name = await self.name.read(event, pipeline)

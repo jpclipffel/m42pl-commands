@@ -29,7 +29,7 @@ class Process(GeneratingCommand):
         :param command: Command name  (e.g. 'ls')
         :param args:    Command arguments
         """
-        super().__init__(self, command, params)
+        super().__init__(command, params)
         self.command = Field(command, default=command)
         self.args = [ Field(param) for param in params ]
 

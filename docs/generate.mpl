@@ -10,6 +10,7 @@
         first(render_mode) as render_mode,
         first(render_path) as render_path
         by command.about
+    | buffer 4096
     | eval command.alias = at(command.aliases, 0)
     | foreach [
         | readfile `joinpath('markdown', 'command_' + command.alias + '.md.j2')` as command.template

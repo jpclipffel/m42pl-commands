@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 from textwrap import dedent
 
 from typing import Any
 
 from m42pl.commands import MetaCommand, GeneratingCommand
-from m42pl.fields import Field
+from m42pl.fields import Field, LiteralField
+from m42pl.event import derive
 
 
 class KVWrite(MetaCommand):
@@ -106,3 +109,39 @@ class KVRead(GeneratingCommand):
                     await self.key.read(event, pipeline)
                 )
             )
+
+
+class KVItems(GeneratingCommand):
+    """Reads the full KVStore.
+    """
+
+    _about_     = 'Read a KVStore'
+    _aliases_   = ['kvitems', 'kv_items']
+    _syntax_    = '[[key=]{key}]'
+
+    def __init__(self, key: str|None = None):
+        self.key = Field(key)
+
+    async def setup(self, event, pipeline):
+        self.key = await self.key.read(event, pipeline)
+
+    async def target(self, event, pipeline):
+        async for k, i in pipeline.context.kvstore.items(self.key):
+            yield await LiteralField(k).write(derive(event), i)
+
+
+class KVDelete(MetaCommand):
+    """Deletes a KVStore key.
+    """
+
+    _about_     = 'Delete a KVStore entry'
+    _aliases_   = ['kvdelete', 'kv_delete']
+    _syntax_    = '[key=]{key}'
+
+    def __init__(self, key: str):
+        self.key = Field(key)
+
+    async def target(self, event, pipeline):
+        await pipeline.context.kvstore.delete(
+            await self.key.read(event, pipeline)
+        )

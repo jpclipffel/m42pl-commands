@@ -87,7 +87,7 @@ class RunMacro(BaseMacro, StreamingCommand):
     _syntax_    = '[name=]<name> [{field}=<value>, ...]'
     _aliases_   = ['_macrorun', ]
 
-    def __init__(self, name: str, **kwargs):
+    def __init__(self, name: str, macro_kwargs: dict = {}):
         """
         :param name:    Macro name.
         """
@@ -96,7 +96,7 @@ class RunMacro(BaseMacro, StreamingCommand):
         self.params = FieldsMap(**dict([
             (name, Field(field))
             for name, field
-            in kwargs.items()]
+            in macro_kwargs.items()]
         ))
 
     async def setup(self, event, pipeline):
@@ -188,11 +188,15 @@ class PurgeMacros(BaseMacro, MetaCommand):
         await pipeline.context.kvstore.remove(self.macros_index)
 
 
+class CloseMacro(StreamingCommand):
+    pass
+
+
 class Macro(MetaCommand):
     """Record or run a macro.
     
     This command returns an instance of :class:`RecordMacro`,
-    :class:`RunMacro` or :class:`GteMacros` depending on what
+    :class:`RunMacro` or :class:`GetMacros` depending on what
     parameters are given.
     """
     _about_     = 'Record a macro, run a macro or return macros list'
@@ -201,8 +205,8 @@ class Macro(MetaCommand):
 
     def __new__(self, *args, **kwargs):
         if len(args) > 1 or len(kwargs) > 1 or 'pipeline' in kwargs:
-            return RecordMacro(*args, **kwargs)
+            return RecordMacro(*args, **kwargs), CloseMacro()
         elif len(args) == 1 or len(kwargs) == 1:
-            return RunMacro(*args, **kwargs)
+            return RunMacro(*args, macro_kwargs=kwargs), CloseMacro()
         else:
-            return GetMacros()
+            return GetMacros(), CloseMacro()

@@ -1,0 +1,23 @@
+{% extends 'command_.md.j2' %}
+
+{% block Description %}
+{{ super() }}
+`make` generates events. It is primarily used in local scripts, REPL mode and
+debug operations.
+{% endblock %}
+
+{% block Examples %}
+{{ super() }}
+
+Generate a single, empty event:
+
+```
+| make
+```
+
+Generate 10 events with basic information:
+
+```
+| make count=10 showinfo=yes
+```
+{% endblock %}

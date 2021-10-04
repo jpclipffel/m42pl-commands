@@ -1,0 +1,21 @@
+{% extends 'command_.md.j2' %}
+
+{% block Description %}
+{{ super() }}
+`foreach` runs a sub-pipeline for each event.
+it is mostly useful to chain generating commands.
+{% endblock %}
+
+{% block Examples %}
+{{ super() }}
+
+Query an url for each event:
+
+```
+| readline 'urls.txt'
+| foreach [
+    | curl url=line
+]
+```
+
+{% endblock %}

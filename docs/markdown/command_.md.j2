@@ -1,0 +1,53 @@
+{%- if render_mode | default('') == 'jekyll' -%}
+---
+layout: default
+title: {{ command.alias }}
+parent: Core commands
+grand_parent: M42PL
+---
+
+{% endif -%}
+
+# `{{ command.alias }}`
+
+{{ command.about }}
+
+{%- if render_mode | default('') == 'jekyll' %}
+
+{{ command.version | default('Beta') }}
+{: .label .label-yellow }
+
+{{ command.type | default('Command') }}
+{: .label-blue }
+
+---
+
+{% endif -%}
+
+{%- block Aliases %}
+## Aliases
+
+{% for alias in command.aliases | default([]) -%}
+* `{{ alias }}`
+{% endfor -%}
+{% endblock -%}
+
+{%- block Synopsis %}
+## Synopsis
+
+```shell
+| {{ command.alias }} {{ command.syntax | default('') }}
+```
+{% endblock -%}
+
+{%- block Description %}
+## Description
+{% endblock -%}
+
+{%- block Examples %}
+## Examples
+{% endblock -%}
+
+{# {%- block SeeAlso %}
+## See also
+{% endblock -%} #}

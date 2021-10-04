@@ -5,7 +5,7 @@ from m42pl.utils.unittest import StreamingCommand, TestScript
 from m42pl.event import Event
 
 
-class Rename(unittest.TestCase, StreamingCommand):
+class Assert(unittest.TestCase, StreamingCommand):
     """Test unit for the `assertion` command.
     """
 

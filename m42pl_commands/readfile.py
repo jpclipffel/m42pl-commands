@@ -35,4 +35,4 @@ class ReadFile(GeneratingCommand):
             with open(await self.path.read(event, pipeline), 'r') as fd:
                 yield await self.field.write(derive(event), fd.read())
         except Exception as _error:
-            yield event
+            yield derive(event)

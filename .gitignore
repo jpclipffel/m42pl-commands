@@ -133,5 +133,5 @@ dmypy.json
 .vscode
 
 # Commands docs
-docs/
-
+docs/sphinx
+docs/jekyll

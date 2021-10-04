@@ -20,8 +20,16 @@ class ReadLines(GeneratingCommand):
     async def target(self, event, pipeline):
         try:
             with open(await self.path.read(event, pipeline), 'r') as fd:
+                line = 0
                 for chunk in fd.readlines():
-                    for line in chunk.splitlines():
-                        yield await self.field.write(derive(event), line)
+                    for text in chunk.splitlines():
+                        yield await self.field.write(
+                            derive(event),
+                            {
+                                'text': text,
+                                'line': line
+                            }
+                        )
+                        line += 1
         except Exception:
             yield event

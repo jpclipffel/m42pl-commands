@@ -1,3 +1,5 @@
+from typing import Any
+
 from textwrap import dedent
 from collections import OrderedDict
 
@@ -60,7 +62,7 @@ class _Write(StreamingCommand):
         self.path = Field(path)
         self.field = field and Field(field, default='') or None
         self.formatter = formatters.Json()
-        self.cache = {}
+        self.cache = {} # type: dict[str, Any]
 
     async def format(self, event, pipeline):
         if self.field:
@@ -83,10 +85,11 @@ class _Write(StreamingCommand):
                 # pylint: disable=bad-open-mode
                 self.cache[path] = open(path, mode)
         # Write to file
-        if isinstance(data, bytes):
-            self.cache[path].write(data)
-        else:
-            print(data, file=self.cache[path])
+        self.cache[path].write(data)
+        # if isinstance(data, bytes):
+        #     self.cache[path].write(data)
+        # else:
+        #     print(data, file=self.cache[path])
         # Done
         yield event
 

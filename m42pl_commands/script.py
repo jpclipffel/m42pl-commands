@@ -66,13 +66,17 @@ class Script(Command):
         integer     = lambda self, items: str(items[0])
         boolean     = lambda self, items: str(items[0].lower())
         name        = lambda self, items: str(items[0])
-        string      = lambda self, items: str(items[0])
+        # string      = lambda self, items: str(items[0])
         eval        = lambda self, items: str(items[0])
         jspath      = lambda self, items: str(items[0])
         dotpath     = lambda self, items: str(items[0])
         body        = lambda self, items: ''.join(items) \
                                             .lstrip(' ') \
                                             .rstrip(' ')
+
+        def string(self, items):
+            return str(items[0]).replace('\\\n', '')
+
 
     def __init__(self, source: str):
         """

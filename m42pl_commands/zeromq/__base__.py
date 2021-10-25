@@ -13,10 +13,7 @@ class Base:
     """Generic ZMQ class.
     """
 
-    _syntax_ = (
-        '[[url=]<url>] [[code=]<codec>] '
-        '[[field=]{field}|({field}, ...)]'
-    )
+    _syntax_ = '[[url=]<url>] [[codec=]<codec>]'
 
     def __init__(self, url: str = 'tcp://127.0.0.1:5555',
                     codec: str = 'msgpack', **kwargs):
@@ -30,12 +27,14 @@ class Base:
         })
 
 
-class Producer(StreamingCommand, MergingCommand):
+class Producer(Base, StreamingCommand, MergingCommand):
     """Generic ZMQ producer.
 
     This class cannot be used as-is and must be inherited to implement
     a pub(lisher) or a push(er) class.
     """
+
+    _syntax_ = Base._syntax_ + ' [[field=]{field}|({field}, ...)]'
 
     def __init__(self, field: str|list = [], *args, **kwargs):
         """
@@ -94,6 +93,8 @@ class Consumer(Base, GeneratingCommand):
     This class cannot be used as-is and must be inherited to implement
     a sub(scriber) or a pull(er) class.
     """
+
+    _syntax_ = Base._syntax_ + ' [[field=]<field>]'
 
     def __init__(self, field: str = 'zmq', *args, **kwargs):
         for parent in [Base, GeneratingCommand, MergingCommand]:

@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import zmq
 
-from m42pl.commands import GeneratingCommand
-from m42pl.fields import Field
-
 from .__base__ import Consumer
 
 
@@ -13,7 +10,13 @@ class Pull(Consumer):
     """
 
     _aliases_   = ['zmq_pull',]
-    _about_     = 'Pull events from a ZMQ socket'
+    _about_     = 'Pull events from ZMQ'
+    _schema_    = {
+        'properties': {
+            'topic': {'type': 'string', 'description': 'ZMQ topic'},
+            'chunk': {'type': 'array', 'description': 'Dispatcher chunk ID and chunks count'}
+        }
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

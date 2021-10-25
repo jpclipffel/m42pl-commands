@@ -13,7 +13,15 @@ class Subscribe(Consumer):
     """
 
     _aliases_   = ['zmq_sub', 'zmq_subscribe']
-    _about_     = 'Subscribe and receive messages from a ZMQ socket'
+    _about_     = 'Subscribe and receive messages from ZMQ'
+    _syntax_    = Consumer._syntax_ + ' [[topic=]<topic>]'
+    _schema_    = {
+        'properties': {
+            'topic': {'type': 'string', 'description': 'ZMQ topic'},
+            'frames': {'type': 'array', 'description': 'Message frames'}
+        }
+    }
+
 
     def __init__(self, topic: str|list = [], *args, **kwargs):
         super().__init__(*args, topic=topic, **kwargs)
@@ -33,21 +41,25 @@ class Subscribe(Consumer):
     async def target(self, event, pipeline):
         while True:
             try:
+                # Read ZMQ frames
                 frames = await self.socket.recv_multipart()
-                # Try to decode topic as string
-                try:
-                    topic = frames[0].decode()
-                except Exception:
-                    topic = frames[0]
+                # If there is a topic, try to decode it and set data seek
+                # to 2nd frame
+                if len(frames) > 1:
+                    seek = 1
+                    try:
+                        topic = frames[0].decode()
+                    except Exception:
+                        topic = frames[0]
+                # If there is no topic, set if to an empty string
+                # and set data seek to 1st frame
+                else:
+                    seek = 0
+                    topic = ''
                 # Done
                 yield await self.field.write(event, {
                     'topic': topic,
-                    'frames': frames[1:]
+                    'frames': frames[seek:]
                 })
-                # Done
-                # yield {
-                #     'topic': topic,
-                #     'frames': frames[1:]
-                # }
             except Exception:
                 raise

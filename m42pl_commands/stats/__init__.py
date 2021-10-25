@@ -19,19 +19,14 @@ class StreamStats(StreamingCommand):
 
     `StreamStats` performs a *streaming aggregation* on the incoming
     events. Since its working on a data stream, events yields by 
-    `StreamStats` are partial statistical results (event #1 may be
-    replaced by event #1 + N).
+    `StreamStats` are partial statistical results (event #n may be
+    replaced by a future event #n+x).
 
     In order to track the latest result, events sharing the same
     aggregation fields values also share the same signature: if you
     receive an event with the same signature as a previous one, you
     should update your calculation to take this new event values into
     account.
-
-    To reduce the pressure on commands which follows a `StreamStats`,
-    the `PostStatsBuffer` command is automatically injected in the
-    pipeline after `StreamStats` to keep only the latest iteration of
-    each unique event.
     """
 
     _aliases_ = ['_stream_stats',]
@@ -97,6 +92,7 @@ class StreamStats(StreamingCommand):
         # ---
         # Done
         yield stated_event
+
 
 class PreStatsMerge(StreamingCommand, MergingCommand):
     """Merges before running `stats`.
@@ -198,10 +194,12 @@ class Stats(StreamingCommand):
     def __new__(cls, *args, **kwargs):
         """Builds and returns the stats commands chain.
         
-        The `stats` command is split into three subcommands:
+        The `stats` command is split into several subcommands:
 
+        * `PreStatsMerge` forces pipeline merge before performing
+          the statistical operations.
         * `StreamStats` performs the actual statistical operations.
-          Ultimately, I should switch to NumPy or Pandas instead of
+          Ultimately, we should switch to NumPy or Pandas instead of
           using a self-made implementation of the statistical functions.
         * `PostStatsMerge` receives the events yields by each parallel
           `StreamStats` commands and aggregates them.

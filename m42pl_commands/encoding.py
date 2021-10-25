@@ -105,3 +105,18 @@ class Decode(Base):
         # yield {
         #     'data': self.encoder.decode(event['frames'][0])
         # }
+
+
+class Codecs(StreamingCommand):
+    _about_     = 'Returns available codecs'
+    _aliases_   = ['codecs',]
+
+    def __init__(self):
+        self.field = Field('codec')
+
+    async def target(self, event, pipeline):
+        for name, encoder in m42pl.encoders.ALIASES.items():
+            yield await self.field.write(event, {
+                'alias': name,
+                'about': encoder._about_
+            })

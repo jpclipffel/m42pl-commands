@@ -12,6 +12,7 @@ class Buffer(DequeBufferingCommand):
     _about_     = 'Delays events processing'
     _syntax_    = '[[size=]<buffer size>] [[showchunk=]<yes|no>]'
     _aliases_   = ['buffer', ]
+    _schema_    = {'properties': {}}
 
     def __init__(self, size: int = 128, showchunk: bool = False,
                     chunkfield: str = 'chunk'):

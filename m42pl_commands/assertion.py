@@ -14,6 +14,7 @@ class Assertion(StreamingCommand):
     _about_     = 'Fails the pipeline if the given expression is false'
     _aliases_   = ['assert',]
     _syntax_    = '<expression>'
+    _schema_    = {'properties': {}}
     _grammar_   = {'start': dedent('''\
         start   : /.+/
     ''')}

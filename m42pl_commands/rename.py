@@ -9,7 +9,7 @@ class Rename(StreamingCommand):
     _about_     = 'Rename fields'
     _syntax_    = '<existing_field> [as] <new_field> [, ...]'
     _aliases_   = ['rename',]
-
+    _schema_    = {'properties': {}}
     _grammar_ = OrderedDict(StreamingCommand._grammar_)
     _grammar_['start'] = dedent('''\
         expr    : field "as"? field

@@ -6,6 +6,7 @@ class Echo(GeneratingCommand):
     _about_     = 'Returns the received event or an empty event'
     _syntax_    = '[[count=]<count>]'
     _aliases_   = ['echo',]
+    _schema_    = {'properties': {}}
 
     def  __init__(self, count: int = 1):
         super().__init__(count)

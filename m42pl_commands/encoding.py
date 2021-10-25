@@ -59,6 +59,11 @@ class Base(StreamingCommand):
 class Encode(Base):
     _about_     = 'Encodes event or event field'
     _aliases_   = ['encode',]
+    _schema_    = {
+        'properties': {
+            '{dest_field}': { 'description': 'Encoded field' }
+        }
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -83,6 +88,11 @@ class Encode(Base):
 class Decode(Base):
     _about_     = 'Decodes event or event field'
     _aliases_   = ['decode',]
+    _schema_    = {
+        'properties': {
+            '{dest_field}': { 'description': 'Decoded field' }
+        }
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -8,6 +8,7 @@ class BaseURL(GeneratingCommand):
     This base class handle the following children commands properties:
 
     * The `_syntax_` attribute
+    * the `_schema_` attribute
     * Fields (parameters)
     """
 
@@ -16,6 +17,33 @@ class BaseURL(GeneratingCommand):
         '[[data=]{data k/v}] [[json=]{json k/v}] [[frequency=]{seconds}]'
         '[[count=]{integer}]'
     )
+
+    _schema_    = {
+        'properties': {
+            'time': { 'type': 'number' },
+            'request': {
+                'type': 'object',
+                'description': 'HTTP request',
+                'properties': {
+                    'method': { 'type': 'string' },
+                    'url': { 'type': 'string' },
+                    'headers': { 'type': 'object' },
+                    'data': { 'type': 'object' }
+                }
+            },
+            'response': {
+                'type': 'object',
+                'description': 'HTTP response',
+                'properties': {
+                    'status': { 'type': 'number' },
+                    'reason': { 'type': 'string' },
+                    'mime': { 'type': 'object' },
+                    'headers': { 'type': 'object' },
+                    'content': {}
+                }
+            }
+        }
+    }
 
     def __init__(self, urls: list = [], method: str = 'GET',
                     headers: dict = {}, data: dict = None, json: dict = None,
@@ -30,7 +58,7 @@ class BaseURL(GeneratingCommand):
                             dict field reference; Defaults to `None`
         :param frequency:   Sleep time between each call; Defaults to 
                             -1 (no sleep time)
-        :param count:       Number of requests to performs; Default to
+        :param count:       Number of requests to performs; Defaults to
                             1 (a single request)
         """
         super().__init__(urls, method, headers, data, json, frequency, count)

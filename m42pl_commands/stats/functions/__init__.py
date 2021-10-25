@@ -3,6 +3,8 @@ from .values import Values
 from .minmax import Min, Max
 from .firstlast import First, Last
 
+from .aggregates import Aggregates
+
 
 # Stats functions (aka. functors) mapping
 # The following dict maps the functors names with their classes.
@@ -12,5 +14,7 @@ names = {
     'min': Min,
     'max': Max,
     'first': First,
-    'last': Last
+    'last': Last,
+    # ---
+    'aggregates': Aggregates
 }

@@ -1,10 +1,8 @@
 import os
-import json
 
 import m42pl
 from m42pl.fields import Field
 from m42pl.commands import DequeBufferingCommand, MergingCommand
-from m42pl.utils import formatters
 
 
 class Output(DequeBufferingCommand, MergingCommand):

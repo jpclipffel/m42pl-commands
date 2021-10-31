@@ -1,5 +1,6 @@
 import os
 
+import json
 from jinja2 import Template, Environment, FunctionLoader
 
 from m42pl.commands import StreamingCommand
@@ -10,7 +11,12 @@ class Jinja(StreamingCommand):
     _about_     = 'Renders a Jinja template'
     _syntax_    = '[src=]{source field} [dest=]{destination field} [[searchpath=]<search path>]'
     _aliases_   = ['jinja', 'template_jinja', 'jinja_template']
-    
+
+    # Custom Jinja2 filters
+    filters = {
+        'jsonify': json.dumps
+    }
+
     def __init__(self, src: str, dest: str, searchpath: str = '.'):
         """
         :param src_field:   Source field.
@@ -25,6 +31,8 @@ class Jinja(StreamingCommand):
     async def setup(self, event, pipeline):
         self.searchpath = await self.searchpath.read(event, pipeline)
         self.jinja_env = Environment(loader=FunctionLoader(self.load_template))
+        # Inject custom filters
+        self.jinja_env.filters.update(self.filters)
 
     def load_template(self, name):
         """Custom templates loader used by the Jinja environment.

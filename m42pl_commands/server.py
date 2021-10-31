@@ -1,4 +1,6 @@
 import asyncio
+from asyncio import transports
+from asyncio import protocols
 from asyncio.protocols import DatagramProtocol
 
 from collections import OrderedDict
@@ -7,81 +9,138 @@ from textwrap import dedent
 from m42pl.commands import GeneratingCommand
 from m42pl.pipeline import InfiniteRunner
 from m42pl.fields import Field, FieldsMap
-from m42pl.event import Event
+from m42pl.event import Event, derive
 
 
-class UDP(DatagramProtocol):
+class UDPProtocol(DatagramProtocol):
+    """UDP protocol handler.
+    """
 
-    def __init__(self, runner):
+    @classmethod
+    async def get_transport(cls, queue, fields):
+        """Returns a 'transport' instance to be used by the `server` command.
+        """
+        transport, protocol = await asyncio.get_running_loop().create_datagram_endpoint(
+            lambda: cls(queue),
+            local_addr=(fields.host, fields.port)
+        )
+        return transport
+
+    def __init__(self, queue):
         super().__init__()
-        self.runner = runner
-
-    async def run(self, data, addr):
-        async for _ in self.runner(event=Event({
-            'data': data,
-            'addr': addr
-        })):
-            pass
+        self.queue = queue
 
     def connection_made(self, transport):
         self.transport = transport
-    
+
     def datagram_received(self, data, addr):
-        loop = asyncio.get_running_loop()
-        loop.create_task(self.run(data, addr))
+        asyncio.get_running_loop().create_task(
+            self.queue.put((data, addr))
+        )
 
 
-class UDPServer(GeneratingCommand):
-    _about_     = 'Runs a socket server'
-    _syntax_    = '[[protocol=]<tcp|udp>] [[host=]{server address}] [[port=]{server port}] [...]'
-    _aliases_   = ['server',]
+class TCPProtocol(asyncio.Protocol):
+    """TCP protocol handler.
+    """
 
-    _grammar_   = OrderedDict(GeneratingCommand._grammar_)
-    _grammar_['start'] = dedent('''\
-        start   : arguments? piperef
-    ''')
+    @classmethod
+    async def get_transport(cls, queue, fields):
+        """Returns a 'transport' instance to be used by the `server` command.
+        """
+        return await asyncio.get_running_loop().create_server(
+            lambda: cls(queue),
+            fields.host,
+            fields.port,
+            start_serving=True
+        )
 
-    class Transformer(GeneratingCommand.Transformer):
-        def start(self, items):
-            print(f'start --> {items}')
-            args = []
-            kwargs = {}
-            # No arguments
-            if len(items) == 1:
-                kwargs['piperef'] = items[0]
-            # Some arguments
-            else:
-                args = items[0][0]
-                kwargs = items[0][1]
-                kwargs['piperef'] = items[1]
-            # ---
-            print(f'start --> {args}, {kwargs}')
-            return args, kwargs
+    def __init__(self, queue):
+        super().__init__()
+        self.queue = queue
 
-    def __init__(self, protocol: str = 'tcp', host: str = '127.0.0.1', port: int = 9000, piperef: str = None):
-        super().__init__(protocol, host, port, piperef)
+    def connection_made(self, transport):
+        self.transport = transport
+
+    def data_received(self, data):
+        asyncio.get_running_loop().create_task(
+            self.queue.put((data, (None, None)))
+        )
+
+
+class Server(GeneratingCommand):
+    """Receives data on a given protocol, host IP and port.
+
+    The current implementation support two protocols:
+    * tcp
+    * udp
+
+    To add support for another protocol, write a new `Protocol` class
+    which will implements the `get_transport` static method.
+    """
+
+    _about_     = 'Receives data on a given protocol, host IP and port'
+    _aliases_   = ['server', 'serve', 'listen']
+    _syntax_    = '[[protocol=]<tcp|udp>] [[host=]<ip>] [[port=]<port>]'
+    _schema_    = {
+        'properties': {
+            'msg': {
+                'type': 'object',
+                'properties': {
+                    'data': { 'description': 'received data' },
+                    'host': { 'description': 'client host' },
+                    'port': { 'description': 'client port' }
+                }
+            }
+        }
+    }
+
+    # Protocol name/class mapping
+    protocols = {
+        'udp': UDPProtocol,
+        'tcp': TCPProtocol
+    }
+
+    def __init__(self, protocol: str = 'tcp', host: str = 'host', port: str = 'port'):
+        """
+        :param protocol:    Protocol to use, defaults to TCP
+        :param host:        Host IP to bind, default to localhost / 127.0.0.1
+        :param port:        Host port to bind, default to 9999
+        """
         self.fields = FieldsMap(**{
-            'protocol': Field(protocol, default='tcp'),
+            'protocol': Field(protocol, default=protocol),
             'host': Field(host, default='127.0.0.1'),
-            'port': Field(port, default=9000)
+            'port': Field(port, default=9999)
         })
-        self.piperef = Field(piperef)
 
     async def target(self, event, pipeline):
-
-        runner = InfiniteRunner(
-            pipeline.context.pipelines[self.piperef.name],
-            pipeline.context,
-            Event()
+        fields = await self.fields.read(event, pipeline)
+        # Shared queue to receive and forwards data to pipeline
+        queue = asyncio.Queue(1)
+        # Get new transport instance
+        protocol = self.protocols.get(fields.protocol.lower())
+        if not protocol:
+            raise Exception(
+                f'Protocol "{fields.protocol}" is unknown, '
+                f'please use one of {", ".join(self.protocols.keys())}'
+            )
+        self.transport = await protocol.get_transport(queue, fields)
+        # Run forever
+        self.logger.info(
+            f'start listening on '
+            f'{fields.protocol.lower()}/{fields.host}:{fields.port}'
         )
-        await runner.setup()
+        while True:
+            data, hostport = await queue.get()
+            yield derive(event, data={
+                'msg': {
+                    'data': data,
+                    'host': hostport[0],
+                    'port': hostport[1]
+                }
+            })
 
-        loop = asyncio.get_running_loop()
-        transport, protocol = await loop.create_datagram_endpoint(
-            lambda: UDP(runner),
-            local_addr=('127.0.0.1', 9999))
+    async def __aexit__(self, *args, **kwargs):
         try:
-            await asyncio.sleep(3600)  # Serve for 1 hour.
-        finally:
-            transport.close()
-        yield None
+            self.transport.close()
+        except Exception:
+            pass

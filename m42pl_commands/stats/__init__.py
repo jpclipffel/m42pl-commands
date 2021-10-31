@@ -3,9 +3,14 @@ from itertools import chain
 from collections import OrderedDict
 from hashlib import blake2b
 
-from m42pl.commands import StreamingCommand, MergingCommand, DequeBufferingCommand
+from tabulate import tabulate
+import curses
+
+from typing import Any
+
+from m42pl.commands import StreamingCommand, MergingCommand, BufferingCommand, DequeBufferingCommand
 from m42pl.fields import Field, FieldsMap
-from m42pl.event import Event
+from m42pl.event import Event, signature
 
 # Stats functors
 # Each stats functions (aka. functors) is defined in its own module.
@@ -68,7 +73,9 @@ class StreamStats(StreamingCommand):
     async def target(self, event, pipeline):
         # ---
         # Create new event which will holds the aggregated values
-        stated_event = Event()
+        stated_event = Event(meta={
+            'stats': {}
+        })
         # ---
         # Prepare event signature
         signature = blake2b()
@@ -213,3 +220,64 @@ class Stats(StreamingCommand):
             # PostStatsMerge(),
             # PostStatsBuffer(**kwargs)
         )
+
+
+class StatsTable(BufferingCommand):
+    """Prints stats table on the standard output.
+    """
+
+    _about_     = 'Prints statistical table'
+    _syntax_    = '[[buffer=]<buffer size>]'
+    _aliases_   = [
+        'print_stats',
+        'output_stats',
+        'stats_output',
+        'stats_print'
+    ]
+
+    def __init__(self, buffer: int = 126):
+        """
+        """
+        super().__init__(buffer)
+        self.buffer = Field(buffer, default=126)
+        self.events: dict[str, Any] = {}
+
+    async def setup(self, event, pipeline):
+        await super().setup(
+            event,
+            pipeline, 
+            await self.buffer.read(event, pipeline)
+        )
+        # Init curses
+        self.logger.info('initialize curses')
+        self.stdscr = curses.initscr()
+        curses.noecho()
+        self.stdscr.clear()
+
+    async def target(self, pipeline):
+        # Get new events from queue and update table
+        async for event in super().target(pipeline):
+            self.events[signature(event)] = event
+            yield event
+        # Update table
+        table = []
+        for _, event in self.events.items():
+            table.append(event.get('data', {}))
+        # Print table
+        self.stdscr.addstr(0, 0, tabulate(table, headers='keys'))
+        self.stdscr.refresh()
+        # Yield events for further processing
+        for _, event in self.events.items():
+            yield event
+
+    async def __aexit__(self, *args, **kwargs) -> None:
+        try:
+            # Reset curses and terminal
+            self.logger.info('reset curses')
+            curses.nocbreak()
+            self.stdscr.keypad(False)
+            self.stdscr.clear()
+            curses.echo()
+            curses.endwin()
+        except Exception:
+            pass

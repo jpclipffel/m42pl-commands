@@ -18,6 +18,8 @@ setup(
     'pygments',
     'lxml',
     'jsonpath-ng',
-    'jinja2'
+    'jinja2',
+    'tabulate',
+    'types-tabulate'
   ]
 )

@@ -4,13 +4,13 @@ import subprocess
 
 from m42pl.commands import GeneratingCommand
 from m42pl.fields import Field
-from m42pl.event import Event
+from m42pl.event import Event, derive
 
 
 class Process(GeneratingCommand):
     _about_     = 'Runs a process and yields its output line by line'
     _aliases_   = ['process',]
-    _syntax_    = '<command name> [argument, ...]'
+    _syntax_    = '{command name} [argument, ...]'
     _grammar_   = OrderedDict(GeneratingCommand._grammar_)
     _grammar_['start'] = dedent('''\
         start : args
@@ -39,7 +39,7 @@ class Process(GeneratingCommand):
         # ---
         process = subprocess.Popen([cmd, ] + args, stdout=subprocess.PIPE)
         for row in iter(process.stdout.readline, b''):
-            yield Event(data={
+            yield derive(event, {
                 'line': row.rstrip().decode('UTF-8')
             })
         process.terminate()

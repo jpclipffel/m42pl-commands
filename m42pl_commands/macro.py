@@ -162,18 +162,25 @@ class DelMacro(BaseMacro, MetaCommand):
         self.name = Field(name, default=name, seqn=True)
 
     async def target(self, event, pipeline):
-        macro_name = await self.name.read(event, pipeline)
-        # Remove macro from KVStore
-        await pipeline.context.kvstore.remove(
-            self.macro_fqdn(macro_name)
-        )
-        # Remove macro reference from KVStore macros list
-        macros = await pipeline.context.kvstore.read(self.macros_index, default={})
-        macros.pop(macro_name)
-        await pipeline.context.kvstore.write(
-            self.macros_index,
-            macros
-        )
+        macro_names = await self.name.read(event, pipeline)
+        for macro_name in macro_names:
+            # Remove macro from KVStore
+            try:
+                await pipeline.context.kvstore.delete(
+                    self.macro_fqdn(macro_name)
+                )
+            except Exception:
+                pass
+            # Remove macro reference from KVStore macros list
+            try:
+                macros = await pipeline.context.kvstore.read(self.macros_index, default={})
+                macros.pop(macro_name)
+                await pipeline.context.kvstore.write(
+                    self.macros_index,
+                    macros
+                )
+            except Exception:
+                pass
 
 
 class PurgeMacros(BaseMacro, MetaCommand):

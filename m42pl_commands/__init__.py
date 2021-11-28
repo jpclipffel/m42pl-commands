@@ -9,7 +9,7 @@ from . import mpi
 
 # Control flow
 from . import (
-    ignore, echo, foreach, until, sleep, assertion, 
+    ignore, echo, foreach, until, sleep, assertion,
     buffer, head, tailf
 )
 
@@ -17,7 +17,7 @@ from . import (
 from . import (
     rename, eval, regex, xpath, jsonpath, stats, jinja, parse_json,
     encoding, msgpack, extract_keyvalues, extract_maps, cut,
-    expand, split, fields, wrap, fieldstats, binset, grok
+    expand, split, fields, wrap, fieldstats, grok
 )
 
 # Data typing
@@ -40,3 +40,6 @@ from . import http_server, server
 
 # ZMQ
 from . import zeromq
+
+# Websockets
+from . import wsocks

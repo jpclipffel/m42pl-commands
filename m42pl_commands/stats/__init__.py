@@ -253,6 +253,8 @@ class StatsTable(BufferingCommand):
         self.stdscr = curses.initscr()
         curses.noecho()
         self.stdscr.clear()
+        # Init view
+        self.stdscr.addstr(0, 0, 'Pipeline runing')
 
     async def target(self, pipeline):
         # Get new events from queue and update table
@@ -264,7 +266,7 @@ class StatsTable(BufferingCommand):
         for _, event in self.events.items():
             table.append(event.get('data', {}))
         # Print table
-        self.stdscr.addstr(0, 0, tabulate(table, headers='keys'))
+        self.stdscr.addstr(2, 0, tabulate(table, headers='keys'))
         self.stdscr.refresh()
         # Yield events for further processing
         for _, event in self.events.items():
@@ -272,6 +274,11 @@ class StatsTable(BufferingCommand):
 
     async def __aexit__(self, *args, **kwargs) -> None:
         try:
+            # Wait for user to quit
+            self.stdscr.addstr(
+                0, 0, 'Pipeline complete, press any key to leave'
+            )
+            self.stdscr.getch()
             # Reset curses and terminal
             self.logger.info('reset curses')
             curses.nocbreak()

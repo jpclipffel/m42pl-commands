@@ -12,6 +12,7 @@ class Expand(StreamingCommand):
     _about_     = 'Duplicate event for each value of the given field'
     _syntax_    = '[field=]{field name}'
     _aliases_   = ['expand', 'mvexpand']
+    _schema_    = {'properties': {}}
 
     def __init__(self, field: str):
         """

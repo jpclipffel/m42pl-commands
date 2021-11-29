@@ -1,5 +1,5 @@
 # M42PL language
-from . import script, mpl_commands, kv, macro
+from . import mpl_commands, kv, macro
 
 # Debug
 from . import output

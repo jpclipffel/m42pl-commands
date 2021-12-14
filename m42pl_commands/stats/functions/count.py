@@ -7,7 +7,7 @@ class Count(StatsFunction):
     """Count the number of events.
     """
     
-    async def target(self, event, dataset, pipeline):
+    async def target(self, event, dataset, pipeline, context):
         if not isinstance(dataset, dict):
             return ({signature(event): 1}, 1)
         if signature(event) not in dataset:

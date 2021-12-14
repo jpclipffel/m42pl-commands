@@ -1,4 +1,5 @@
 from .count import Count
+from.distinctcount import DistinctCount
 from .values import Values
 from .minmax import Min, Max
 from .firstlast import First, Last
@@ -10,6 +11,8 @@ from .aggregates import Aggregates
 # The following dict maps the functors names with their classes.
 names = {
     'count': Count,
+    'dc': DistinctCount,
+    'distinctcount': DistinctCount,
     'values': Values,
     'min': Min,
     'max': Max,

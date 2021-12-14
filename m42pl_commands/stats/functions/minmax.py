@@ -5,8 +5,8 @@ class Min(StatsFunction):
     """Returns the minimum value for the given field.
     """
 
-    async def target(self, event, dataset, pipeline):
-        event_value = await self.source_field.read(event, pipeline)
+    async def target(self, event, dataset, pipeline, context):
+        event_value = await self.source_field.read(event, pipeline, context)
         if not isinstance(dataset, (int, float)):
             dataset = None
         if isinstance(event_value, (int, float)) and (dataset is None or event_value < dataset):
@@ -18,8 +18,8 @@ class Max(StatsFunction):
     """Returns the maximum value for the given field.
     """
 
-    async def target(self, event, dataset, pipeline):
-        event_value = await self.source_field.read(event, pipeline)
+    async def target(self, event, dataset, pipeline, context):
+        event_value = await self.source_field.read(event, pipeline, context)
         if not isinstance(dataset, (int, float)):
             dataset = None
         if isinstance(event_value, (int, float)) and (dataset is None or event_value > dataset):

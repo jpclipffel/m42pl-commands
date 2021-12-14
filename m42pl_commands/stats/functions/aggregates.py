@@ -7,5 +7,5 @@ class Aggregates(StatsFunction):
     """Returns the internal aggregation structures.
     """
 
-    async def __call__(self, event, pipeline):
+    async def __call__(self, event, pipeline, context):
         return self.aggregates

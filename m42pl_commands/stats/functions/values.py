@@ -5,8 +5,8 @@ class Values(StatsFunction):
     """Returns the list of unique values for a given field.
     """
 
-    async def target(self, event, dataset, pipeline):
-        event_value = await self.source_field.read(event, pipeline)
+    async def target(self, event, dataset, pipeline, context):
+        event_value = await self.source_field.read(event, pipeline, context)
         if not isinstance(dataset, list):
             dataset = list()
         if isinstance(event_value, list):

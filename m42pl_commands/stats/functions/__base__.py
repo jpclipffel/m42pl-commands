@@ -24,7 +24,7 @@ class StatsFunction:
         self.dest_field = dest_field
         self.aggregates = aggregates
 
-    async def __call__(self, event, pipeline):
+    async def __call__(self, event, pipeline, context):
         aggregates = self.aggregates
         # ---
         # Update aggregation table structure with event's fields values
@@ -47,7 +47,7 @@ class StatsFunction:
             #       jane: {},
             #       ...
             # }
-            field_value = str(await field.read(event, pipeline))
+            field_value = str(await field.read(event, pipeline, context))
             if field_value not in aggregates:
                 aggregates[field_value] = {}
             # ---
@@ -66,7 +66,8 @@ class StatsFunction:
         aggregates[self.dest_field.name], value = await self.target(
             event,
             aggregates[self.dest_field.name],
-            pipeline
+            pipeline,
+            context
         )
         return value
 

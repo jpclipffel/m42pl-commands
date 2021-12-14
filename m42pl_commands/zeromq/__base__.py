@@ -59,7 +59,7 @@ class Producer(Base, StreamingCommand, MergingCommand):
         if not self.first_chunk:
             return
         # ---
-        self.args = await self.args.read(event, pipeline)
+        self.args = await self.args.read(event, pipeline, context)
         self.encoder = m42pl.encoder(self.args.codec)()
         self.context = zmq.asyncio.Context.instance()
         # Create and bind socket
@@ -108,7 +108,7 @@ class Consumer(Base, GeneratingCommand):
 
         :param sock_type:   ZMQ socket type.
         """
-        self.args = await self.args.read(event, pipeline)
+        self.args = await self.args.read(event, pipeline, context)
         self.encoder = m42pl.encoder(self.args.codec)()
         self.context = zmq.asyncio.Context.instance()
         # Create and connect socket

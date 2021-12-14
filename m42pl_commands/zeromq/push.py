@@ -21,14 +21,14 @@ class Push(Producer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         await super().setup(zmq.PUSH, event, pipeline)
 
     async def build_frames(self, event, pipeline) -> List[str|bytes]:
         """Returns a list of frames to be sent through ZMQ.
         """
         frames = []
-        fields = await self.fields.read(event, pipeline)
+        fields = await self.fields.read(event, pipeline, context)
         if len(fields) > 0:
             for field in fields:
                 frames.append(self.encode(field))
@@ -36,7 +36,7 @@ class Push(Producer):
             frames.append(self.encode(event['data']))
         return frames
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         """Sends data through ZMQ.
         """
         if self.first_chunk:

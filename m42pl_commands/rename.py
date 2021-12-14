@@ -35,7 +35,7 @@ class Rename(StreamingCommand):
             in fields
         ]
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         for old, new in self.fields:
             # TODO: Add a `pop()` method to the field API.
             # This will become:

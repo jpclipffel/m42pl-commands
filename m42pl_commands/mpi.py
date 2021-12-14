@@ -81,7 +81,7 @@ class MPISend(MPIBase, StreamingCommand):
         """
         super().__init__(chan)
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         try:
             self.write(event['data'][self.msgpack_field])
         except Exception as error:
@@ -127,7 +127,7 @@ class MPIReceive(MPIBase, GeneratingCommand):
         self.producers_count = 0
         self.producers_closed = 0
     
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         while True:
             try:
                 data = self.read()

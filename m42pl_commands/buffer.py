@@ -22,13 +22,13 @@ class Buffer(DequeBufferingCommand):
         self.chunkfield = Field(chunkfield, default='chunk')
         self.chunks = 1
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         await super().setup(
             event,
             pipeline,
-            await self.size.read(event, pipeline)
+            await self.size.read(event, pipeline, context)
         )
-        self.showchunk = await self.showchunk.read(event, pipeline)
+        self.showchunk = await self.showchunk.read(event, pipeline, context)
 
     async def target(self, pipeline):
         async for event in super().target(pipeline):

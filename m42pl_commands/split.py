@@ -22,9 +22,9 @@ class Split(StreamingCommand):
         self.field = Field(field, default=[], seqn=True)
         self.keys = Field(keys, default=[], seqn=True)
 
-    async def target(self, event, pipeline):
-        keys = await self.keys.read(event, pipeline)
-        for i, item in enumerate(await self.field.read(event, pipeline)):
+    async def target(self, event, pipeline, context):
+        keys = await self.keys.read(event, pipeline, context)
+        for i, item in enumerate(await self.field.read(event, pipeline, context)):
             if isinstance(item, dict):
                 yield Event(data=item)
             elif isinstance(item, (list, tuple)):
@@ -35,5 +35,5 @@ class Split(StreamingCommand):
                         })
                 else:
                     yield Event(data={
-                        await self.key.read(event, pipeline): item
+                        await self.key.read(event, pipeline, context): item
                     })

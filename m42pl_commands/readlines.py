@@ -17,9 +17,9 @@ class ReadLines(GeneratingCommand):
         self.path = Field(path)
         self.field = Field(field, default='line')
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         try:
-            with open(await self.path.read(event, pipeline), 'r') as fd:
+            with open(await self.path.read(event, pipeline, context), 'r') as fd:
                 line = 0
                 for chunk in fd.readlines():
                     for text in chunk.splitlines():

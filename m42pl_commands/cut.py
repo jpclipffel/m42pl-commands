@@ -31,22 +31,22 @@ class Cut(StreamingCommand):
         # self.expr = Field(expr)
         # self.clean = Field(clean, default=False)
 
-    async def cut_filter(self, event, pipeline):
+    async def cut_filter(self, event, pipeline, context):
         return list(filter(
             None, 
-            self.expr.split(await self.field.read(event, pipeline))
+            self.expr.split(await self.field.read(event, pipeline, context))
         ))
     
-    async def cut_nofilter(self, event, pipeline):
-        return self.expr.split(await self.field.read(event, pipeline))
+    async def cut_nofilter(self, event, pipeline, context):
+        return self.expr.split(await self.field.read(event, pipeline, context))
 
-    async def setup(self, event, pipeline):
-        fields = await self.fields.read(event, pipeline)
+    async def setup(self, event, pipeline, context):
+        fields = await self.fields.read(event, pipeline, context)
         self.expr = regex.compile(fields.expr)
         self.cutter = fields.clean and self.cut_filter or self.cut_nofilter
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         yield await self.field.write(
             event,
-            await self.cutter(event, pipeline)
+            await self.cutter(event, pipeline, context)
         )

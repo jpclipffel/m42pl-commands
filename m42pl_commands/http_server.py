@@ -4,8 +4,9 @@ from aiohttp import web
 import json
 
 from collections import OrderedDict
+from attr.setters import pipe
 
-from m42pl.pipeline import InfiniteRunner
+from m42pl.pipeline import InfiniteRunner, PipelineRunner
 from m42pl.commands import GeneratingCommand
 from m42pl.fields import Field, FieldsMap
 from m42pl.event import Event
@@ -57,7 +58,7 @@ class HTTPServer(GeneratingCommand):
             # ---
             return args, kwargs
 
-    async def create_handler(self, pipeline, piperef):
+    async def create_handler(self, pipeline, context, piperef):
         """Instanciates, setups and returns an AIOHTTP handler.
 
         :param pipeline:    Current pipeline
@@ -70,21 +71,32 @@ class HTTPServer(GeneratingCommand):
             """
 
             def __init__(self, runner):
+            # def __init__(self, pipeline, context):
                 """
                 :param runner:  Pipeline runner.
                 """
                 self.runner = runner
+                # self.runner = InfiniteRunner(
+                #     pipeline,
+                #     context,
+                #     Event()
+                # )
 
             async def __call__(self, request):
                 """Handles an AIOHTTP request.
 
                 :param request: AIOHTTP request.
                 """
+                print(f'Handler.__call__({request})')
+                # await self.runner.setup()
                 try:
                     jsdata = await request.json()
-                except Exception:
+                    print(jsdata)
+                except Exception as error:
+                    print(error)
                     jsdata = {}
                 resp = []
+                # try:
                 async for next_event in self.runner(Event(data={
                     'url': str(request.url),
                     'host': request.host,
@@ -95,7 +107,14 @@ class HTTPServer(GeneratingCommand):
                     'content_type': request.content_type,
                     'content_length': request.content_length
                 })):
-                    resp.append(next_event['data'])
+                    if next_event is not None:
+                        resp.append(next_event['data'])
+                    else:
+                        pass
+                        # print(f'broken')
+                        # raise OSError()
+                # except Exception as error:
+                #     print(f'exception: {error}')
                 if len(resp) == 0:
                     return web.Response(text='{}')
                 elif len(resp) == 1:
@@ -104,15 +123,20 @@ class HTTPServer(GeneratingCommand):
                     return web.Response(text=json.dumps(resp))
 
         # Create and setup the handler pipeline runner
-        runner = InfiniteRunner(
-            pipeline.context.pipelines[piperef],
-            pipeline.context,
-            Event()
+        # runner = InfiniteRunner(
+        runner = PipelineRunner(
+            context.pipelines[piperef],
+            # pipeline.context,
+            # Event()
         )
-        await runner.setup()
+        # await runner.setup()
 
         # Create and return handler
         return Handler(runner)
+        # return Handler(
+        #     pipeline=pipeline.context.pipelines[piperef],
+        #     context=pipeline.context
+        # )
 
 
     def __init__(self, host: str = 'localhost', port: int = 8080,
@@ -139,9 +163,9 @@ class HTTPServer(GeneratingCommand):
         # Default pipeline reference
         self.piperef = Field(piperef, default=piperef)
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         # Read fields
-        self.fields = await self.fields.read(event, pipeline)
+        self.fields = await self.fields.read(event, pipeline, context)
         # ---
         # Setup routes
         routes = []
@@ -158,7 +182,7 @@ class HTTPServer(GeneratingCommand):
             routes.append(web.route(
                 '*',
                 '/',
-                await self.create_handler(pipeline, self.piperef.name)
+                await self.create_handler(pipeline, context, self.piperef.name)
             ))
         # ---
         # Create and setup AIOHTTP app, runner and site

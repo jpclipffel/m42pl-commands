@@ -50,9 +50,9 @@ class Base(StreamingCommand):
         self.src = src and Field(src, default=src) or None
         self.dest = dest and Field(dest, default=dest) or None
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         self.encoder = m42pl.encoder(
-            await self.codec.read(event, pipeline)
+            await self.codec.read(event, pipeline, context)
         )()
 
 
@@ -70,12 +70,12 @@ class Encode(Base):
         if not self.dest:
             self.dest = Field('encoded')
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         if self.src:
             yield await self.dest.write(
                 event,
                 self.encoder.encode({
-                    self.src.name: await self.src.read(event, pipeline)
+                    self.src.name: await self.src.read(event, pipeline, context)
                 })
             )
         else:
@@ -99,17 +99,17 @@ class Decode(Base):
         if not self.src:
             self.src = Field('encoded')
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         if self.dest:
             yield await self.dest.write(
                 event,
-                self.encoder.decode(await self.src.read(event, pipeline))
+                self.encoder.decode(await self.src.read(event, pipeline, context))
             )
         else:
             yield derive(
                 event,
                 data=self.encoder.decode(
-                    await self.src.read(event, pipeline)
+                    await self.src.read(event, pipeline, context)
                 )
             )
         # yield {
@@ -124,7 +124,7 @@ class Codecs(StreamingCommand):
     def __init__(self):
         self.field = Field('codec')
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         for name, encoder in m42pl.encoders.ALIASES.items():
             yield await self.field.write(event, {
                 'alias': name,

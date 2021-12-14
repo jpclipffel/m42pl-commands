@@ -46,19 +46,19 @@ class Regex(StreamingCommand):
         self.update = Field(update, default=update)
         self.compiled = None
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         if self.expression.literal:
-            self.compiled = regex.compile(await self.expression.read(event, pipeline))
-        self.update = await self.update.read(event, pipeline)
+            self.compiled = regex.compile(await self.expression.read(event, pipeline, context))
+        self.update = await self.update.read(event, pipeline, context)
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         try:
             # ---
             # Run regex or compile-then-run regex
             if self.compiled:
                 results = self.compiled.match(await self.source_field.read(event)).groupdict()
             else:
-                expression = regex.compile(await self.expression.read(event, pipeline))
+                expression = regex.compile(await self.expression.read(event, pipeline, context))
                 results = expression.match(await self.source_field.read(event)).groupdict()
             # ---
             # Assign reslts fields

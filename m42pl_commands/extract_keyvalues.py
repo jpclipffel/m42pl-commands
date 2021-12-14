@@ -31,16 +31,16 @@ class ExtractKV(StreamingCommand):
         self.pairdelim = Field(pairdelim, type=str, default=',')
         self.dest = dest and Field(dest) or self.field
     
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         self.kvdelim = regex.compile(
-            await self.kvdelim.read(event, pipeline)
+            await self.kvdelim.read(event, pipeline, context)
         )
         self.pairdelim = regex.compile(
-            await self.pairdelim.read(event, pipeline)
+            await self.pairdelim.read(event, pipeline, context)
         )
 
-    async def target(self, event, pipeline):
-        line = await self.field.read(event, pipeline)
+    async def target(self, event, pipeline, context):
+        line = await self.field.read(event, pipeline, context)
         pairs = [
             kv for kv in [
                 self.kvdelim.split(pair) for pair

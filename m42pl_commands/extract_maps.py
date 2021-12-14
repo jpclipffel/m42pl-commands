@@ -46,15 +46,15 @@ class ExtractMap(StreamingCommand):
             count += 1
             yield f'{self.prefix}{count}'
 
-    async def setup(self, event, pipeline):
-        self.headers = await self.headers.read(event, pipeline)
-        self.prefix = await self.prefix.read(event, pipeline)
+    async def setup(self, event, pipeline, context):
+        self.headers = await self.headers.read(event, pipeline, context)
+        self.prefix = await self.prefix.read(event, pipeline, context)
         self.delim = regex.compile(
-            await self.delim.read(event, pipeline)
+            await self.delim.read(event, pipeline, context)
         )
 
-    async def target(self, event, pipeline):
-        line = await self.field.read(event, pipeline)
+    async def target(self, event, pipeline, context):
+        line = await self.field.read(event, pipeline, context)
         yield await self.dest.write(
             event, 
             dict(zip(

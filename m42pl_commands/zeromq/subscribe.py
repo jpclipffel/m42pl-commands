@@ -31,14 +31,14 @@ class Subscribe(Consumer):
             'topic': Field(topic, default=['', ], seqn=True)
         })
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         await super().setup(zmq.SUB, event, pipeline)
         # Configure topic (envelope filtering)
         self.logger.info(f'registering topics: {self.args.topic}')
         for topic in self.args.topic:
             self.socket.setsockopt_string(zmq.SUBSCRIBE, topic)
     
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         while True:
             try:
                 # Read ZMQ frames

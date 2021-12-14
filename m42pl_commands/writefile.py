@@ -66,15 +66,15 @@ class _Write(StreamingCommand):
 
     async def format(self, event, pipeline):
         if self.field:
-            return await self.field.read(event, pipeline)
+            return await self.field.read(event, pipeline, context)
         return self.formatter(event)
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         # Get data and deduce open mode first
         data = await self.format(event, pipeline)
         mode = isinstance(data, bytes) and self.mode + 'b' or self.mode
         # Get path
-        path = await self.path.read(event, pipeline)
+        path = await self.path.read(event, pipeline, context)
         # Open given file at `path` and add it to cache
         if path not in self.cache:
             try:

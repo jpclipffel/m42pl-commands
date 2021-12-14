@@ -10,7 +10,7 @@ class FieldStats(BufferingCommand):
         super().__init__()
         self.stats = {}
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         await super().setup(event, pipeline, maxsize=100)
 
     def stats_key(self, key, value):

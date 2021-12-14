@@ -67,10 +67,10 @@ class StreamStats(StreamingCommand):
             else:
                 raise Exception(f'Unknown stats function: {function_name}')
 
-    async def setup(self, event, pipeline):
-        await super().setup(event, pipeline)
+    async def setup(self, event, pipeline, context):
+        await super().setup(event, pipeline, context)
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         # ---
         # Create new event which will holds the aggregated values
         stated_event = Event(meta={
@@ -83,7 +83,7 @@ class StreamStats(StreamingCommand):
         # Read aggregation fields values and update signature
         for field in self.aggr_fields:
             # Read aggregation field value
-            value = await field.read(event, pipeline)
+            value = await field.read(event, pipeline, context)
             # Update signature
             signature.update(str(value).encode())
             # Write aggregation field value to new event
@@ -95,7 +95,7 @@ class StreamStats(StreamingCommand):
         # ---
         # Compute and add the stated fields to the new event
         for field, function in self.stated_fields.items():
-            await field.write(stated_event, await function(event, pipeline))
+            await field.write(stated_event, await function(event, pipeline, context))
         # ---
         # Done
         yield stated_event
@@ -107,7 +107,7 @@ class PreStatsMerge(StreamingCommand, MergingCommand):
 
     _aliases_ = ['_pre_stats_merge',]
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         yield event
 
 
@@ -117,7 +117,7 @@ class PostStatsMerge(StreamingCommand, MergingCommand):
 
     _aliases_ = ['_post_stats_merge',]
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         yield event
 
 
@@ -136,11 +136,11 @@ class PostStatsBuffer(DequeBufferingCommand):
         super().__init__(buffer)
         self.buffer_size = Field(buffer, type=int, default=10000)
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         await super().setup(
             event,
             pipeline,
-            maxsize=await self.buffer_size.read(event, pipeline)
+            maxsize=await self.buffer_size.read(event, pipeline, context)
         )
 
     # async def target(self, pipeline):
@@ -242,11 +242,11 @@ class StatsTable(BufferingCommand):
         self.buffer = Field(buffer, default=126)
         self.events: dict[str, Any] = {}
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         await super().setup(
             event,
             pipeline, 
-            await self.buffer.read(event, pipeline)
+            await self.buffer.read(event, pipeline, context)
         )
         # Init curses
         self.logger.info('initialize curses')

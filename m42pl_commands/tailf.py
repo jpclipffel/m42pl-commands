@@ -15,10 +15,10 @@ class Tailf(StreamingCommand):
         super().__init__(count)
         self.count = Field(count, default=1)
     
-    async def setup(self, event, pipeline):
-        self.count = await self.count.read(event, pipeline)
+    async def setup(self, event, pipeline, context):
+        self.count = await self.count.read(event, pipeline, context)
     
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         if self.count > 0:
             self.count -= 1
         else:

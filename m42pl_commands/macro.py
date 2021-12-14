@@ -43,9 +43,9 @@ class RecordMacro(BaseMacro, MetaCommand):
         self.pipeline = Field(pipeline)
         self.notes = Field(notes, default='')
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         # Get macro name
-        macro_name = await self.name.read(event, pipeline)
+        macro_name = await self.name.read(event, pipeline, context)
         # Renders macros dict
         macro_dict = pipeline.context.pipelines[self.pipeline.name].to_dict()
         # Write macro to KVStore
@@ -66,7 +66,7 @@ class RecordMacro(BaseMacro, MetaCommand):
                 **macros,
                 **{
                     macro_name: {
-                        'notes': await self.notes.read(event, pipeline),
+                        'notes': await self.notes.read(event, pipeline, context),
                         'timestamp': now().timestamp(),
                         'author': '',
                         'json': macro_dict
@@ -99,8 +99,8 @@ class RunMacro(BaseMacro, StreamingCommand):
             in macro_kwargs.items()]
         ))
 
-    async def setup(self, event, pipeline):
-        macro_name = await self.name.read(event, pipeline)
+    async def setup(self, event, pipeline, context):
+        macro_name = await self.name.read(event, pipeline, context)
         macro_fqdn = self.macro_fqdn(macro_name)
         macro_dict = await pipeline.context.kvstore.read(macro_fqdn)
         if macro_dict is None:
@@ -113,7 +113,7 @@ class RunMacro(BaseMacro, StreamingCommand):
             macro_dict
         )
         # Init macro event
-        self.params = await self.params.read(event, pipeline)
+        self.params = await self.params.read(event, pipeline, context)
         event['data'].update(self.params.__dict__)
         # Init runner
         self.runner = InfiniteRunner(
@@ -123,7 +123,7 @@ class RunMacro(BaseMacro, StreamingCommand):
         )
         await self.runner.setup()
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         async for _event in self.runner(event):
             yield _event
 
@@ -138,7 +138,7 @@ class GetMacros(BaseMacro, GeneratingCommand):
 
     key_name    = 'macro'
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         macros = await pipeline.context.kvstore.read(self.macros_index, default={})
         for name, macro in macros.items():
             if macro:
@@ -161,8 +161,8 @@ class DelMacro(BaseMacro, MetaCommand):
         super().__init__(name)
         self.name = Field(name, default=name, seqn=True)
 
-    async def target(self, event, pipeline):
-        macro_names = await self.name.read(event, pipeline)
+    async def target(self, event, pipeline, context):
+        macro_names = await self.name.read(event, pipeline, context)
         for macro_name in macro_names:
             # Remove macro from KVStore
             try:
@@ -190,7 +190,7 @@ class PurgeMacros(BaseMacro, MetaCommand):
     _syntax_    = ''
     _aliases_   = ['purgemacro', 'purgemacros']
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         await pipeline.context.kvstore.remove(self.kvstore_prefix)
         await pipeline.context.kvstore.remove(self.macros_index)
 

@@ -17,7 +17,7 @@ class Wrap(StreamingCommand):
         """
         self.field = field and Field(field, default=field) or None
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         if self.field:
             yield await self.field.write(Event(), event['data'])
         else:

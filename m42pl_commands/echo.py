@@ -12,8 +12,8 @@ class Echo(GeneratingCommand):
         super().__init__(count)
         self.count = Field(count, default=count, type=int)
     
-    async def target(self, event, pipeline):
-        count = await self.count.read(event, pipeline)
+    async def target(self, event, pipeline, context):
+        count = await self.count.read(event, pipeline, context)
         while count > 0:
             yield event
             count -= 1

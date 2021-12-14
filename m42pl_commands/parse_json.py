@@ -16,11 +16,11 @@ class ParseJson(StreamingCommand):
         super().__init__(field)
         self.field = Field(field)
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         try:
             yield await self.field.write(
                 event,
-                json.loads(await self.field.read(event, pipeline))
+                json.loads(await self.field.read(event, pipeline, context))
             )
         except Exception:
             raise

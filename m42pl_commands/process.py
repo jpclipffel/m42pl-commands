@@ -33,9 +33,9 @@ class Process(GeneratingCommand):
         self.command = Field(command, default=command)
         self.args = [ Field(param) for param in params ]
 
-    async def target(self, event, pipeline):
-        cmd = await self.command.read(event, pipeline)
-        args = [ await arg.read(event, pipeline) for arg in self.args ]
+    async def target(self, event, pipeline, context):
+        cmd = await self.command.read(event, pipeline, context)
+        args = [ await arg.read(event, pipeline, context) for arg in self.args ]
         # ---
         process = subprocess.Popen([cmd, ] + args, stdout=subprocess.PIPE)
         for row in iter(process.stdout.readline, b''):

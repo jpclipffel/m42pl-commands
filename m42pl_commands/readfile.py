@@ -30,9 +30,9 @@ class ReadFile(GeneratingCommand):
         self.path = Field(path)
         self.field = Field(field, default=field)
     
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         try:
-            with open(await self.path.read(event, pipeline), 'r') as fd:
+            with open(await self.path.read(event, pipeline, context), 'r') as fd:
                 yield await self.field.write(derive(event), fd.read())
         except Exception as _error:
             yield derive(event)

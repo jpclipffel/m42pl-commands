@@ -14,7 +14,7 @@ class Assertion(StreamingCommand):
     _about_     = 'Fails the pipeline if the given expression is false'
     _aliases_   = ['assert',]
     _syntax_    = '<expression>'
-    _schema_    = {'properties': {}}
+    _schema_    = {'properties': {}} # type: ignore
     _grammar_   = {'start': dedent('''\
         start   : /.+/
     ''')}
@@ -27,7 +27,7 @@ class Assertion(StreamingCommand):
         super().__init__(expression)
         self.expr = Evaluator(expression)
 
-    async def target(self, event, piepline):
+    async def target(self, event, *args, **kwargs):
         if not self.expr(event['data']):
             raise Exception('assertion failed')
         yield event

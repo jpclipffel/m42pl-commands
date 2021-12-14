@@ -21,10 +21,10 @@ class Pull(Consumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         await super().setup(zmq.PULL, event, pipeline)
     
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         while True:
             try:
                 yield await self.field.write(event, {

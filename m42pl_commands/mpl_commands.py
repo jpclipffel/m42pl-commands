@@ -44,9 +44,9 @@ class MPLCommands(m42pl.commands.GeneratingCommand):
         self.command_name = Field(command, default=command)
         self.ebnf = Field(ebnf, default=ebnf)
 
-    async def target(self, event, pipeline):
-        command_name = await self.command_name.read(event, pipeline)
-        ebnf = await self.ebnf.read(event, pipeline)
+    async def target(self, event, pipeline, context):
+        command_name = await self.command_name.read(event, pipeline, context)
+        ebnf = await self.ebnf.read(event, pipeline, context)
         #  ---
         if command_name:
             try:

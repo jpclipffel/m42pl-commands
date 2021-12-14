@@ -47,11 +47,11 @@ class KVWrite(MetaCommand):
         self.key = Field(key, default=key)
         self.value = Field(value, default=value)
     
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         if event:
             await pipeline.context.kvstore.write(
-                await self.key.read(event, pipeline),
-                await self.value.read(event, pipeline)
+                await self.key.read(event, pipeline, context),
+                await self.value.read(event, pipeline, context)
             )
 
 
@@ -101,12 +101,12 @@ class KVRead(GeneratingCommand):
         self.key = Field(key, default=key)
         self.dest = Field(dest, default=dest)
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         if event:
             yield await self.dest.write(
                 event,
                 await pipeline.context.kvstore.read(
-                    await self.key.read(event, pipeline)
+                    await self.key.read(event, pipeline, context)
                 )
             )
 
@@ -122,10 +122,10 @@ class KVItems(GeneratingCommand):
     def __init__(self, key: str|None = None):
         self.key = Field(key)
 
-    async def setup(self, event, pipeline):
-        self.key = await self.key.read(event, pipeline)
+    async def setup(self, event, pipeline, context):
+        self.key = await self.key.read(event, pipeline, context)
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         async for k, i in pipeline.context.kvstore.items(self.key):
             yield await LiteralField(k).write(derive(event), i)
 
@@ -141,7 +141,7 @@ class KVDelete(MetaCommand):
     def __init__(self, key: str):
         self.key = Field(key)
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         await pipeline.context.kvstore.delete(
-            await self.key.read(event, pipeline)
+            await self.key.read(event, pipeline, context)
         )

@@ -38,8 +38,8 @@ class Fields(StreamingCommand):
         self.mode = Field(mode, default=mode)
         self.fields = [Field(f) for f in fields]
     
-    async def setup(self, event, pipeline):
-        self.mode = await self.mode.read(event, pipeline)
+    async def setup(self, event, pipeline, context):
+        self.mode = await self.mode.read(event, pipeline, context)
         self.filter = self.mode == '+' and self.keep or self.remove
 
     async def keep(self, event):
@@ -60,5 +60,5 @@ class Fields(StreamingCommand):
             await field.delete(event)
         return event
     
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         yield await self.filter(event)

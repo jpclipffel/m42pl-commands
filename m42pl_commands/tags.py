@@ -20,8 +20,8 @@ class Tags(StreamingCommand):
         )
         self.tags = Field('tags')
     
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         yield await self.tags.write(
             event,
-            (await self.fields.read(event, pipeline)).__dict__
+            (await self.fields.read(event, pipeline, context)).__dict__
         )

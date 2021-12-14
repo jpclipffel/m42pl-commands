@@ -26,15 +26,15 @@ class JSONPath(StreamingCommand):
         self.src = Field(src, default=src)
         self.dest = Field(dest, default=dest)
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         self.jspath = jsonpath_ng.parse(
-            await self.jspath.read(event, pipeline)
+            await self.jspath.read(event, pipeline, context)
         )
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         matched = []
         # Read source field
-        field = await self.src.read(event, pipeline)
+        field = await self.src.read(event, pipeline, context)
         # Match JSONPath
         if not field:
             matched = self.jspath.find(event['data'])

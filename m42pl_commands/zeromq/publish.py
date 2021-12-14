@@ -25,7 +25,7 @@ class Publish(Producer):
             'topic': Field(topic, default=b'')
         })
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         await super().setup(zmq.PUB, event, pipeline)
         # Encode topic
         if not isinstance(self.args.topic, bytes):
@@ -38,7 +38,7 @@ class Publish(Producer):
         """Returns a list of frames to be sent through ZMQ.
         """
         frames = []
-        fields = await self.fields.read(event, pipeline)
+        fields = await self.fields.read(event, pipeline, context)
         if self.args.topic:
             frames.append(self.args.topic)
         if len(fields) > 0:
@@ -48,7 +48,7 @@ class Publish(Producer):
             frames.append(self.encode(event['data']))
         return frames
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         """Sends data through ZMQ.
         """
         if self.first_chunk:

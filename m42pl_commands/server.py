@@ -112,8 +112,8 @@ class Server(GeneratingCommand):
             'port': Field(port, default=9999)
         })
 
-    async def target(self, event, pipeline):
-        fields = await self.fields.read(event, pipeline)
+    async def target(self, event, pipeline, context):
+        fields = await self.fields.read(event, pipeline, context)
         # Shared queue to receive and forwards data to pipeline
         queue = asyncio.Queue(1)
         # Get new transport instance

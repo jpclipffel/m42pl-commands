@@ -21,6 +21,6 @@ class Expand(StreamingCommand):
         super().__init__(field)
         self.field = Field(field, default=[], seqn=True)
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         for item in await self.field.read(event):
             yield await self.field.write(derive(event), item)

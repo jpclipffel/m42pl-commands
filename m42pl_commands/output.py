@@ -50,15 +50,15 @@ class Output(DequeBufferingCommand, MergingCommand):
         print(self.encoder.encode(event['data']))
         self.counter += 1
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         # Setup current instance
-        self.format = await self.format.read(event, pipeline)
-        self.header = await self.header.read(event, pipeline)
+        self.format = await self.format.read(event, pipeline, context)
+        self.header = await self.header.read(event, pipeline, context)
         # Setup parent instance
         await super().setup(
             event,
             pipeline, 
-            await self.buffer.read(event, pipeline)
+            await self.buffer.read(event, pipeline, context)
         )
         # Prepare formatter
         try:

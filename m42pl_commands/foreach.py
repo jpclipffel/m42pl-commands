@@ -38,7 +38,7 @@ class Foreach(StreamingCommand):
         super().__init__(pipeline)
         self.pipeline = Field(pipeline)
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         self.runner = InfiniteRunner(
             pipeline.context.pipelines[self.pipeline.name],
             pipeline.context,

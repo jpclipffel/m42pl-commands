@@ -23,13 +23,13 @@ class XPath(StreamingCommand):
         # Initialize parser
         self.parser = etree.HTMLParser()
 
-    async def setup(self, event, pipeline):
-        self.xpath = etree.XPath(await self.xpath.read(event, pipeline))
+    async def setup(self, event, pipeline, context):
+        self.xpath = etree.XPath(await self.xpath.read(event, pipeline, context))
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         # Parse
         tree = etree.fromstring(
-            await self.src.read(event, pipeline),
+            await self.src.read(event, pipeline, context),
             parser=self.parser
         )
         # Process matched items

@@ -37,7 +37,7 @@ class WSBroadcaster(StreamingCommand):
         })
         self.paths: dict[str, Any] = {}
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
 
         async def websocket_handler(request: Any):
             """Handles an http client.
@@ -71,7 +71,7 @@ class WSBroadcaster(StreamingCommand):
             return ws
 
         # Process fields
-        self.fields = await self.fields.read(event, pipeline)
+        self.fields = await self.fields.read(event, pipeline, context)
         # Setup encoder
         self.encoder = m42pl.encoder(self.fields.encoder)()
         # Setup aiohttp app
@@ -92,9 +92,9 @@ class WSBroadcaster(StreamingCommand):
         )
         await site.start()
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         # Get event path
-        path = (await self.path.read(event, pipeline)).strip('/')
+        path = (await self.path.read(event, pipeline, context)).strip('/')
         # Encode event once for all clients before broadcast
         encoded = self.encoder.encode(event)
         # Notify clients subscribed to the event's path

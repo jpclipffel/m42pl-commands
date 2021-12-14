@@ -10,7 +10,7 @@ from . import mpi
 # Control flow
 from . import (
     ignore, echo, foreach, until, sleep, assertion,
-    buffer, head, tailf
+    buffer, head, tailf, limit
 )
 
 # Data manipulation

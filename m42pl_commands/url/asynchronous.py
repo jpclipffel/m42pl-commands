@@ -80,8 +80,8 @@ class URL(BaseURL):
                 }
             }
 
-    async def target(self, event, pipeline):
-        fields = await self.fields.read(event, pipeline)
+    async def target(self, event, pipeline, context):
+        fields = await self.fields.read(event, pipeline, context)
         # Do not run if we're not in the first chunk, i.e. do not
         # request the same URL in multiple process/tasks/threads/...
         if not self.first_chunk:

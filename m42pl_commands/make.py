@@ -33,9 +33,9 @@ class Make(GeneratingCommand):
             'freqdelay' : Field(freqdelay, default=1, type=int)
         })
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         # Read fields
-        self.fields = await self.fields.read(event, pipeline)
+        self.fields = await self.fields.read(event, pipeline, context)
         # Get chunks
         chunk_size, remain = divmod(self.fields.count, self._chunks)
         # First chunk
@@ -51,7 +51,7 @@ class Make(GeneratingCommand):
             self.begin_count = self._chunk * chunk_size
             self.end_count = self.begin_count + chunk_size + remain
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         for i in range(self.begin_count, self.end_count):
             yield derive(
                 event,

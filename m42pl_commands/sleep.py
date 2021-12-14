@@ -13,9 +13,9 @@ class Sleep(StreamingCommand):
         super().__init__(seconds)
         self.seconds = Field(seconds, default=seconds)
 
-    async def setup(self, event, pipeline):
-        self.seconds = await self.seconds.read(event, pipeline)
+    async def setup(self, event, pipeline, context):
+        self.seconds = await self.seconds.read(event, pipeline, context)
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         await asyncio.sleep(self.seconds)
         yield event

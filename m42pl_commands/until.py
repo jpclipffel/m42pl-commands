@@ -26,7 +26,7 @@ class Until(GeneratingCommand):
         self.field = Field(field)
         self.pipeline = Field(pipeline)
 
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         self.runner = InfiniteRunner(
             pipeline.context.pipelines[self.pipeline.name],
             pipeline.context,
@@ -34,7 +34,7 @@ class Until(GeneratingCommand):
         )
         await self.runner.setup()
 
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         source_event = event
         while True:
             async for next_event in self.runner(source_event):

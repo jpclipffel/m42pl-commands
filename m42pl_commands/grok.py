@@ -37,27 +37,27 @@ class Grok(StreamingCommand):
         self.dest = dest and Field(dest).name or ''
         self.compiled = None
     
-    async def setup(self, event, pipeline):
+    async def setup(self, event, pipeline, context):
         if self.expression.literal:
             self.compiled = grok.Grok(
-                await self.expression.read(event, pipeline),
+                await self.expression.read(event, pipeline, context),
                 keep_nameless=True,
                 ignore_failed=True
             )
     
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         if self.compiled:
-            results = self.compiled(await self.src.read(event, pipeline))
+            results = self.compiled(await self.src.read(event, pipeline, context))
         else:
-            results = grok.Grok(await self.expression.read(event, pipeline),
+            results = grok.Grok(await self.expression.read(event, pipeline, context),
                 keep_nameless=True,
                 ignore_failed=True
-            )(await self.src.read(event, pipeline))
+            )(await self.src.read(event, pipeline, context))
         # ---
         for field, value in results.items():
             await Field(f'{self.dest}.{field}').write(event, value)
         yield event
         # yield await self.dest.write(
         #     event,
-        #     self.compiled(await self.src.read(event, pipeline))
+        #     self.compiled(await self.src.read(event, pipeline, context))
         # )

@@ -28,8 +28,8 @@ class Jinja(StreamingCommand):
         self.dest_field = Field(dest)
         self.searchpath = Field(searchpath, default=os.path.abspath('.'))
 
-    async def setup(self, event, pipeline):
-        self.searchpath = await self.searchpath.read(event, pipeline)
+    async def setup(self, event, pipeline, context):
+        self.searchpath = await self.searchpath.read(event, pipeline, context)
         self.jinja_env = Environment(loader=FunctionLoader(self.load_template))
         # Inject custom filters
         self.jinja_env.filters.update(self.filters)
@@ -47,11 +47,11 @@ class Jinja(StreamingCommand):
         except Exception:
             return None
     
-    async def target(self, event, pipeline):
+    async def target(self, event, pipeline, context):
         try:
             yield await self.dest_field.write(
                 event,
-                self.jinja_env.from_string(await self.src_field.read(event, pipeline)).render(**event['data'])
+                self.jinja_env.from_string(await self.src_field.read(event, pipeline, context)).render(**event['data'])
             )
         except Exception as error:
             self.logger.error(error)

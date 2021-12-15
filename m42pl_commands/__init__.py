@@ -16,7 +16,7 @@ from . import (
 # Data manipulation
 from . import (
     rename, eval, regex, xpath, jsonpath, stats, jinja, parse_json,
-    encoding, msgpack, extract_keyvalues, extract_maps, cut,
+    encoding, extract_keyvalues, extract_maps, cut,
     expand, split, fields, wrap, fieldstats, grok
 )
 

@@ -22,6 +22,27 @@ class HTTPServer(GeneratingCommand):
         '''| with 'method' on 'path' = <pipeline>, ...)'''
     )
     _aliases_   = ['http_server', 'server_http']
+    _schema_    = {
+        'properties': {
+            'request': {
+                'type': 'object',
+                'properties': {
+                    'url': {'type': 'string', 'description': 'Requested URL'},
+                    'host': {'type': 'string', 'description': 'Server host'},
+                    'path': {'type': 'string', 'description': 'Requested path'},
+                    'scheme': {'type': 'string', 'description': 'Requested URL scheme'},
+                    'jsdata': {'type': 'object', 'description': 'Request JSON data'},
+                    'query_string': {'type': 'string', 'description': 'Requested URL query'},
+                    'content_type': {'type': 'string', 'description': 'Request content type'},
+                    'content_length': {'type': 'number', 'description': 'Request size'}
+                }
+            }
+        },
+        'additionalProperties': {
+            'description': 'Response fields'
+        }
+    }
+
     _grammar_   = OrderedDict(GeneratingCommand._grammar_)
     _grammar_['start'] = dedent('''\
         rule    : STRING "on" field "=" piperef
@@ -58,63 +79,54 @@ class HTTPServer(GeneratingCommand):
             # ---
             return args, kwargs
 
-    async def create_handler(self, pipeline, context, piperef):
+    async def create_handler(self, context, piperef):
         """Instanciates, setups and returns an AIOHTTP handler.
 
-        :param pipeline:    Current pipeline
-        :param piperef:     Handler's pipeline reference
-                            (pipeline to run when handler is called)
+        :param context: Current context
+        :param piperef: handler's pipeline
         """
 
         class Handler:
             """AIOHTTP handler.
             """
 
-            def __init__(self, runner):
-            # def __init__(self, pipeline, context):
+            def __init__(self, context, piperef):
                 """
-                :param runner:  Pipeline runner.
+                :param context: Current context
+                :param piperef: handler's pipeline
                 """
-                self.runner = runner
-                # self.runner = InfiniteRunner(
-                #     pipeline,
-                #     context,
-                #     Event()
-                # )
+                self.context = context
+                self.runner = PipelineRunner(
+                    context.pipelines[piperef]
+                )
 
             async def __call__(self, request):
                 """Handles an AIOHTTP request.
 
-                :param request: AIOHTTP request.
+                :param request: AIOHTTP request
                 """
-                print(f'Handler.__call__({request})')
-                # await self.runner.setup()
                 try:
                     jsdata = await request.json()
-                    print(jsdata)
                 except Exception as error:
-                    print(error)
                     jsdata = {}
                 resp = []
-                # try:
-                async for next_event in self.runner(Event(data={
-                    'url': str(request.url),
-                    'host': request.host,
-                    'path': request.path,
-                    'scheme': request.scheme,
-                    'jsdata': jsdata,
-                    'query_string': request.query_string,
-                    'content_type': request.content_type,
-                    'content_length': request.content_length
-                })):
+                # ---
+                # Process request in sub-pipeline (== handler's pipeline)
+                async for next_event in self.runner(self.context, Event(data={
+                    'request': {
+                        'url': str(request.url),
+                        'host': request.host,
+                        'path': request.path,
+                        'scheme': request.scheme,
+                        'jsdata': jsdata,
+                        'query_string': request.query_string,
+                        'content_type': request.content_type,
+                        'content_length': request.content_length
+                    }})):
                     if next_event is not None:
                         resp.append(next_event['data'])
-                    else:
-                        pass
-                        # print(f'broken')
-                        # raise OSError()
-                # except Exception as error:
-                #     print(f'exception: {error}')
+                # ---
+                # Format and return response
                 if len(resp) == 0:
                     return web.Response(text='{}')
                 elif len(resp) == 1:
@@ -122,35 +134,20 @@ class HTTPServer(GeneratingCommand):
                 else:
                     return web.Response(text=json.dumps(resp))
 
-        # Create and setup the handler pipeline runner
-        # runner = InfiniteRunner(
-        runner = PipelineRunner(
-            context.pipelines[piperef],
-            # pipeline.context,
-            # Event()
-        )
-        # await runner.setup()
-
         # Create and return handler
-        return Handler(runner)
-        # return Handler(
-        #     pipeline=pipeline.context.pipelines[piperef],
-        #     context=pipeline.context
-        # )
+        return Handler(context, piperef)
 
 
     def __init__(self, host: str = 'localhost', port: int = 8080,
                     rules: list = [], piperef: str = None):
         """
-        :param host:        Server host
-                            Defaults to local host (localhost)
-        :param port:        Server port
-                            Defaults to 8080
-        :param rules:       AIOHTTP routes rules
-                            List of tuples as (method, path, pipeline)
-                            Mutually-exclusive with :param:`piperef`
-        :param piperef:     Default pipeline to run
-                            Mutually-exclusive with :param:`rules`
+        :param host: Server host; Defaults to ``localhost``
+        :param port: Server port; Defaults to ``8080``
+        :param rules: AIOHTTP routes rules;
+            List of tuples as (method, path, pipeline);
+            Mutually-exclusive with ``piperef``
+        :param piperef: Default pipeline to run;
+            Mutually-exclusive with ``rules``
         """
         super().__init__(host, port, rules, piperef)
         # Base arguments
@@ -175,14 +172,14 @@ class HTTPServer(GeneratingCommand):
                 routes.append(web.route(
                     method,
                     path, 
-                    await self.create_handler(pipeline, Field(piperef).name)
+                    await self.create_handler(context, Field(piperef).name)
                 ))
         # 2 - If no rules are given, use the default pipeline
         else:
             routes.append(web.route(
                 '*',
                 '/',
-                await self.create_handler(pipeline, context, self.piperef.name)
+                await self.create_handler(context, self.piperef.name)
             ))
         # ---
         # Create and setup AIOHTTP app, runner and site

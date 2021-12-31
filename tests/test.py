@@ -5,6 +5,12 @@ from m42pl.utils.unittest import Command
 import m42pl.commands
 
 
+EXCLUDED_COMMAND = [
+    'm42pl.commands.script.PipelineScript',
+    'm42pl.commands.script.JSONScript'
+]
+
+
 class Dummy(unittest.TestCase):
     def test_dummy(self):
         pass
@@ -35,10 +41,11 @@ def load_tests(loader, tests, pattern):
     m42pl.load_modules()
     # Generate test classes
     for _, command in m42pl.commands.ALIASES.items():
-        if command.__name__ not in commands:
-            commands.append([command.__name__])
+        cmd_name = f'{command.__module__}.{command.__name__}'
+        if cmd_name not in commands and cmd_name not in EXCLUDED_COMMAND:
+            commands.append(cmd_name)
             tests.append(
-                type(command.__name__, (unittest.TestCase, Command), {
+                type(cmd_name, (unittest.TestCase, Command), {
                     'command_alias': command._aliases_[0]
                 })
             )

@@ -34,10 +34,10 @@ class Regex(StreamingCommand):
     def __init__(self, expression: str, src: str, dest: str = None,
                     update: bool = False):
         """
-        :param expression:  Regular expression with named groups
-        :param src:         Source field name
-        :param dest:        Destination field name
-        :param update:      Update the source field instead
+        :param expression: Regular expression with named groups
+        :param src: Source field name
+        :param dest: Destination field name
+        :param update: Update the source field instead
         """
         super().__init__(expression, src, dest, update)
         self.expression = Field(expression)

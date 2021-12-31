@@ -3,10 +3,13 @@ from m42pl.fields import Field
 
 
 class Echo(GeneratingCommand):
+    """Returns the received event.
+    """
+
     _about_     = 'Returns the received event or an empty event'
     _syntax_    = '[[count=]<count>]'
     _aliases_   = ['echo',]
-    _schema_    = {'properties': {}}
+    _schema_    = {'properties': {}} # type: ignore
 
     def  __init__(self, count: int = 1):
         super().__init__(count)

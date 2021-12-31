@@ -6,11 +6,15 @@ class Tailf(StreamingCommand):
     _about_     = 'Ignore the firsts events'
     _syntax_    = '[[count=]<count>]'
     _aliases_   = ['tailf',]
+    _schema_    = {
+        'additionalProperties': {
+            'description': 'Source event properties'
+        }
+    }
 
     def __init__(self, count: int = 1):
         """
-        :param count:   Number or events to ignore.
-                        Defaults to 1.
+        :param count: Number or events to ignore (defaults to 1)
         """
         super().__init__(count)
         self.count = Field(count, default=1)

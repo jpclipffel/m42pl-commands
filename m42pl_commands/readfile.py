@@ -7,9 +7,19 @@ from m42pl.fields import Field
 
 
 class ReadFile(GeneratingCommand):
+    """Reads a whole text file at once.
+
+    To read a text file line by line, see ``ReadLines``.
+    """
+
     _about_     = 'Read a text file'
-    _aliases_   = ['readfile']
+    _aliases_   = ['readfile',]
     _syntax_    = '{file path} (as {field name})'
+    _schema_    = {
+        'properties': {
+            'file': {'type': 'string', 'description': 'Read data'}
+        }
+    }
 
     _grammar_ = OrderedDict(GeneratingCommand._grammar_)
     _grammar_['start'] = dedent('''\
@@ -23,8 +33,8 @@ class ReadFile(GeneratingCommand):
 
     def __init__(self, path: str, field: str = 'file'):
         """
-        :param path:    Source file path
-        :param dest:    Destination field
+        :param path: Source file path
+        :param dest: Destination field
         """
         super().__init__(path)
         self.path = Field(path)

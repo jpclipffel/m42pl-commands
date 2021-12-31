@@ -20,6 +20,7 @@ class KVWrite(MetaCommand):
     _about_     = 'Set a KVStore key'
     _aliases_   = ['kvwrite', 'kv_write']
     _syntax_    = '<key name> [=] <field>'
+    _schema_    = {'properties': {}} # type: ignore
 
     _grammar_   = OrderedDict(GeneratingCommand._grammar_)
     _grammar_['start'] = dedent('''\
@@ -65,6 +66,11 @@ class KVRead(GeneratingCommand):
     _about_     = 'Read a KVStore key'
     _aliases_   = ['kvread', 'kv_read']
     _syntax_    = '<key name> | <key name> as <field> | <field> = <key name>'
+    _schema_    = {
+        'properties': {
+            '{dest}': {'description': 'Key value read from KVStore'}
+        }
+    }
 
     _grammar_   = OrderedDict(GeneratingCommand._grammar_)
     _grammar_['start'] = dedent('''\
@@ -118,6 +124,11 @@ class KVItems(GeneratingCommand):
     _about_     = 'Read a KVStore'
     _aliases_   = ['kvitems', 'kv_items']
     _syntax_    = '[[key=]{key}]'
+    _schema_    = {
+        'properties': {
+            '{key}': {'description': 'Key value read from KVStore'}
+        }
+    }
 
     def __init__(self, key: str|None = None):
         self.key = Field(key)
@@ -137,6 +148,7 @@ class KVDelete(MetaCommand):
     _about_     = 'Delete a KVStore entry'
     _aliases_   = ['kvdelete', 'kv_delete']
     _syntax_    = '[key=]{key}'
+    _schema_    = {'properties': {}} # type: ignore
 
     def __init__(self, key: str):
         self.key = Field(key)

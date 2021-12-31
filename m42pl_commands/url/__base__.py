@@ -18,7 +18,7 @@ class BaseURL(GeneratingCommand):
         '[[count=]{integer}]'
     )
 
-    _schema_    = {
+    _schema_ = {
         'properties': {
             'time': { 'type': 'number' },
             'request': {
@@ -49,17 +49,18 @@ class BaseURL(GeneratingCommand):
                     headers: dict = {}, data: dict = None, json: dict = None,
                     frequency: int = -1, count: int = 1):
         """
-        :param urls:        URLs to fetch
-        :param method:      HTTP method ("GET", "POST", ...)
-        :param headers:     HTTP headers field; Defaults to an empty map
-        :param data:        Form field; Should be either `None` or a
-                            dict field reference; Defaults to `None`
-        :param json:        JSON field; Should be either `None` or a
-                            dict field reference; Defaults to `None`
-        :param frequency:   Sleep time between each call; Defaults to 
-                            -1 (no sleep time)
-        :param count:       Number of requests to performs; Defaults to
-                            1 (a single request)
+        :param urls: URLs to fetch
+        :param method: HTTP method (``GET``, ``POST``, ...)
+        :param headers: HTTP headers field
+            (defaults to an empty ``dict``)
+        :param data: Form field (defaults to ``None``)
+            Should be either ``None`` or a ``dict`` field
+        :param json: JSON payload (defaults to ``None``)
+            Should be either ``None`` or a ``dict`` field
+        :param frequency: Sleep time between each call
+            (defaults to -1, i.e. no sleep time)
+        :param count: Number of requests to performs
+            (defaults to 1, i.e. a single request)
         """
         super().__init__(urls, method, headers, data, json, frequency, count)
         self.fields = FieldsMap(**{

@@ -5,15 +5,23 @@ from m42pl.fields import Field
 
 
 class XPath(StreamingCommand):
+    """Evaluates an XPath expression.
+    """
+
     _about_     = 'Evaluate an XPath expression'
     _syntax_    = '<[expression=]expression> <[field=]source field> [[dest=]dest field]'
     _aliases_   = ['xpath', ]
+    _schema_    = {
+        'properties': {
+            '{dest}': {'description': 'XPath results'}
+        }
+    }
 
     def __init__(self, expression: str, src: str, dest: str):
         """
-        :param expression:  XPath epxression
-        :param src:         Source field
-        :param dest:        Destination field
+        :param expression: XPath epxression
+        :param src: Source field
+        :param dest: Destination field
         """
         super().__init__(expression, src, dest)
         # Initialize fields

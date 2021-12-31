@@ -8,9 +8,16 @@ class Tags(StreamingCommand):
     _about_     = 'Tags events with key/value pairs'
     _syntax_    = '<key name>={field} [...]'
     _aliases_   = ['tag', 'tags']
+    _schema_    = {
+        'properties': {
+            'tags': {
+                'type': 'object',
+                'description': 'Tags as key/value pairs',
+            }
+        }
+    }
 
     def __init__(self, **kwargs):
-        print(kwargs)
         self.fields = FieldsMap(
             **dict([
                 (k, Field(v))

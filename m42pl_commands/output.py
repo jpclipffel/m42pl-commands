@@ -15,6 +15,7 @@ class Output(DequeBufferingCommand, MergingCommand):
     _about_     = 'Prints events'
     _syntax_    = '[[format=](hjson|raw|...)] [[buffer=]<number>]'
     _aliases_   = ['output', 'print']
+    _schema_    = {'properties': {}} # type: ignore
 
     def __init__(self, format: str = 'hjson', header: bool = False,
                     buffer: int = 0):
@@ -57,7 +58,8 @@ class Output(DequeBufferingCommand, MergingCommand):
         # Setup parent instance
         await super().setup(
             event,
-            pipeline, 
+            pipeline,
+            context,
             await self.buffer.read(event, pipeline, context)
         )
         # Prepare formatter

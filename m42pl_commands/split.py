@@ -12,11 +12,16 @@ class Split(StreamingCommand):
     _about_     = 'Returns one new event per value for the given field'
     _syntax_    = '[field=]{field name}'
     _aliases_   = ['split', 'mvsplit']
+    _schema_    = {
+        'additionalProperties': {
+            'description': 'Source event properties'
+        }
+    }
 
     def __init__(self, field: str, keys: list = []):
         """
-        :param field:   Field to split on
-        :param keys:    New field names
+        :param field: Field to split on
+        :param keys: New field names
         """
         super().__init__(field, keys)
         self.field = Field(field, default=[], seqn=True)

@@ -10,10 +10,15 @@ class Wrap(StreamingCommand):
     _about_     = 'Wraps all fields into another field'
     _syntax_    = '[field=]{field name}'
     _aliases_   = ['wrap',]
+    _schema_    = {
+        'properties': {
+            '{field}': {'description': 'Wrapper field'}
+        }
+    }
 
     def __init__(self, field = 'wrapped'):
         """
-        :param field:   New field to wrap to.
+        :param field: Wrapper field name
         """
         self.field = field and Field(field, default=field) or None
 

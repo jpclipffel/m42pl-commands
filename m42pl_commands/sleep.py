@@ -8,8 +8,12 @@ class Sleep(StreamingCommand):
     _about_     = 'Sleep for the given amount of seconds (defaults to 1 second)'
     _syntax_    = '<seconds>'
     _aliases_   = ['sleep',]
+    _schema_    = {'properties': {}} # type: ignore
 
     def __init__(self, seconds: int = 1):
+        """
+        :param seconds: Time to wait in seconds
+        """
         super().__init__(seconds)
         self.seconds = Field(seconds, default=seconds)
 

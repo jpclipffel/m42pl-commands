@@ -11,17 +11,22 @@ class Jinja(StreamingCommand):
     _about_     = 'Renders a Jinja template'
     _syntax_    = '[src=]{source field} [dest=]{destination field} [[searchpath=]<search path>]'
     _aliases_   = ['jinja', 'template_jinja', 'jinja_template']
+    _schema_    = {
+        'properties': {
+            '{dest}': {'description': 'Jinja-evaluated result'}
+        }
+    }
 
     # Custom Jinja2 filters
     filters = {
         'jsonify': json.dumps
     }
 
-    def __init__(self, src: str, dest: str, searchpath: str = '.'):
+    def __init__(self, src: str, dest: str, searchpath: str = ''):
         """
-        :param src_field:   Source field.
-        :param dest_field:  Destination field.
-        :param searchpath:  Templates default search path.
+        :param src_field: Source field
+        :param dest_field: Destination field
+        :param searchpath: Templates default search path
         """
         super().__init__(src, dest, searchpath)
         self.src_field  = Field(src)

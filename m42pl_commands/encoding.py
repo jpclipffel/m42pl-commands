@@ -120,6 +120,17 @@ class Decode(Base):
 class Codecs(StreamingCommand):
     _about_     = 'Returns available codecs'
     _aliases_   = ['codecs',]
+    _schema_    = {
+        'properties': {
+            'code': {
+                'type': 'object',
+                'properties': {
+                    'alias': {'type': 'string', 'description': 'Codec name'},
+                    'about': {'type': 'string', 'description': 'Codec info'},
+                }
+            }
+        }
+    }
 
     def __init__(self):
         self.field = Field('codec')

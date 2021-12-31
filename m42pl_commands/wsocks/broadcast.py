@@ -16,19 +16,28 @@ class WSBroadcaster(StreamingCommand):
     """
 
     _about_     = 'Broadcast events to websocket clients'
-    _syntax_    = '[[path]={path}] [[encoder=]<encoder name>] [[host=]<ip/hostname>] [[port=]<port>]'
+    _syntax_    = (
+        '''[[path]={path}] [[encoder=]<encoder name>] '''
+        '''[[host=]<ip/hostname>] [[port=]<port>]'''
+    )
     _aliases_   = ['ws_bcast', 'ws_broadcast']
+    _schema_    = {
+        'properties': {},
+        'additionalProperties': {
+            'description': 'Event fields'
+        }
+    }
 
     def __init__(self, path: str = 'path', encoder: str = 'encoder',
                     host: str = 'host', port: str|int = 'port'):
         """
-        :param path:    Event's field name indicating on which path the
-                        event should be broadcasted
+        :param path: Event's field name indicating on which path the
+            event should be broadcasted
         :param encoder: Encoder name
-        :param host:    Websocket server host
-        :param port:    Websocket server port
+        :param host: Websocket server host
+        :param port: Websocket server port
         """
-        super().__init__(path)
+        super().__init__(path, encoder, host, port)
         self.path = Field(path, default='/')
         self.fields = FieldsMap(**{
             'encoder': Field(encoder, default='json'),
@@ -42,7 +51,7 @@ class WSBroadcaster(StreamingCommand):
         async def websocket_handler(request: Any):
             """Handles an http client.
 
-            :param request:     Connection request
+            :param request: Connection request
             """
             self.logger.info(f'new connection: remote="{request.remote}", url="{request.url}"')
             # Setup websocket instance

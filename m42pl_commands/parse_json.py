@@ -8,6 +8,14 @@ class ParseJson(StreamingCommand):
     _about_     = 'Parse a JSON string'
     _syntax_    = '[field=]<field>'
     _aliases_   = ['parse_json', 'json_parse']
+    _schema_    = {
+        'properties': {
+            '{field}': {
+                'type': 'object',
+                'description': 'String parsed as object'
+            }
+        }
+    }
 
     def __init__(self, field: str):
         """

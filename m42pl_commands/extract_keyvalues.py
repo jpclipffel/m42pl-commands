@@ -13,17 +13,18 @@ class ExtractKV(StreamingCommand):
         '[[dest=]<dest field>]'
     )
     _aliases_   = ['extract_kv', 'extract_kvs']
+    _schema_    = {'properties': {}} # type: ignore
 
     def __init__(self, field, kvdelim: str = '=', pairdelim: str = ',',
                     dest: str = None):
         """
-        :param field:       Source field
-        :param kvdelim:     Key and value delimiter regex
-                            Defaults to an equal sign (=)
-        :param pairdelim:   Key/value pairs delimiter regex
-                            Defaults to a comma ( , )
-        :param dest:        Destination field
-                            Default to source field
+        :param field: Source field
+        :param kvdelim: Key and value delimiter regex;
+            Defaults to an equal sign ``=``
+        :param pairdelim: Key/value pairs delimiter regex;
+            Defaults to a comma ``,``
+        :param dest: Destination field;
+            Defaults to the source field
         """
         super().__init__(field, kvdelim, pairdelim, dest)
         self.field = Field(field)

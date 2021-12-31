@@ -47,7 +47,7 @@ class Producer(Base, StreamingCommand, MergingCommand):
             parent.__init__(self, *args, field=field, **kwargs)
         self.fields = Field(field, default=[], seqn=True)
 
-    async def setup(self, sock_type, event, pipeline):
+    async def setup(self, sock_type, event, pipeline, context):
         """Setup the instance.
 
         This parent method has to be called by the child first.
@@ -68,12 +68,12 @@ class Producer(Base, StreamingCommand, MergingCommand):
         await sleep(0.25)
 
     def encode(self, data):
-        """Encode the given :param:`data`.
+        """Encode the given ``data``.
 
         Data is encoded only if it's not a string or a byte array.
         Encoding is done using the class' encoder (defaults to msgpack).
 
-        :param data:    Data to encode, typically a frame content.
+        :param data: Data to encode, typically a frame content.
         """
         if not isinstance(data, (str, bytes)):
             return self.encoder.encode(data)
@@ -101,12 +101,12 @@ class Consumer(Base, GeneratingCommand):
             parent.__init__(self, *args, field=field, **kwargs)
         self.field = Field(field, default='zmq')
 
-    async def setup(self, sock_type, event, pipeline):
+    async def setup(self, sock_type, event, pipeline, context):
         """Setup the instance.
 
         This parent method has to be called by the child first.
 
-        :param sock_type:   ZMQ socket type.
+        :param sock_type: ZMQ socket type.
         """
         self.args = await self.args.read(event, pipeline, context)
         self.encoder = m42pl.encoder(self.args.codec)()

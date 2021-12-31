@@ -10,33 +10,34 @@ from m42pl.utils import formatters
 
 
 class _Write(StreamingCommand):
-    """Base class for `write` commands.
+    """Base class for ``write`` commands.
 
-    Effective commands are defined at the end of this module.
+    Commands themselves are defined at the end of this module.
 
     This basic implementation does a simple caching of the open file
-    descriptors in :ivar:`cache`. As soon as it tries to open more file
-    than allowed by the OS, `target` catches an `OSError`, proceeds to
-    cleanup the open FD and retry.
+    descriptors in ``cache``. As soon as it tries to open more file
+    than allowed by the OS, ``target`` catches an ``OSError``, proceeds
+    to cleanup the open files descriptors and retry.
 
-    The cache is also cleaned-up at the command's `__aexit__`.
+    The cache is also cleaned-up at the command's ``__aexit__``.
 
     Furthermore, the file open mode is defined as follow:
 
-    * If command is `write` or `writefile`, open mode starts with `w`
-      (write and truncate)
-    * If command is `write-append` or `writefile-append`, open mode
-      starts with 'a' (write and append)
-    * If the first event or event field written to a given path is
-      `bytes`, `b` (binary) is added to mode; otherwise, the mode is
-      not changed.
+    * If command is ``write`` or ``writefile``, open mode starts with
+    ``w`` (write and truncate)
+    * If command is ``write-append`` or ``writefile-append``, open mode
+      starts with ``a`` (write and append)
+    * If the first event or event field written to a given path is of
+      type ``bytes``, the ``b`` (binary) flag is added to mode;
+      otherwise, the mode is not changed.
 
-    :ivar mode:         Write mode
-    :ivar formatter:    Event formatter; Default to `JsonFormatter`
-    :ivar cache:        File descriptors cache
+    :ivar mode: Write mode
+    :ivar formatter: Event formatter; Default to ``JsonFormatter``
+    :ivar cache: File descriptors cache
     """
 
     _syntax_    = '({field name} to) {file path}'
+    _schema_    = {'properties': {}} # type: ignore
 
     _grammar_ = OrderedDict(StreamingCommand._grammar_)
     _grammar_['start'] = dedent('''\
@@ -64,14 +65,14 @@ class _Write(StreamingCommand):
         self.formatter = formatters.Json()
         self.cache = {} # type: dict[str, Any]
 
-    async def format(self, event, pipeline):
+    async def format(self, event, pipeline, context):
         if self.field:
             return await self.field.read(event, pipeline, context)
         return self.formatter(event)
 
     async def target(self, event, pipeline, context):
         # Get data and deduce open mode first
-        data = await self.format(event, pipeline)
+        data = await self.format(event, pipeline, context)
         mode = isinstance(data, bytes) and self.mode + 'b' or self.mode
         # Get path
         path = await self.path.read(event, pipeline, context)

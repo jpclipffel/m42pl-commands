@@ -4,14 +4,30 @@ from m42pl.fields import Field
 
 
 class ReadLines(GeneratingCommand):
+    """Reads a text file line by line.
+
+    To read a whole text file at once, see ``ReadFile``.
+    """
+
     _about_     = 'Read a file line by line'
     _aliases_   = ['readlines', 'readline']
     _syntax_    = '[path=]{file path} [field=]{dest field}'
+    _schema_    = {
+        'properties': {
+            '{dest field}': {
+                'type': 'object',
+                'properties': {
+                    'text': {'type': 'string', 'description': 'Read line'},
+                    'line': {'type': 'number', 'description': 'Line count'}
+                }
+            }
+        }
+    }
     
     def __init__(self, path: str, field: str = 'line'):
         """
-        :param path:    Source file path
-        :param dest:    Destination field
+        :param path: Source file path
+        :param dest: Destination field
         """
         super().__init__(path, field)
         self.path = Field(path)

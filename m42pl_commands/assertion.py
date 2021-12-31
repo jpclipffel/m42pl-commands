@@ -24,6 +24,9 @@ class Assertion(StreamingCommand):
             return (), {'expression': str(items[0])}
         
     def __init__(self, expression: str):
+        """
+        :param expression: Expression to assert
+        """
         super().__init__(expression)
         self.expr = Evaluator(expression)
 

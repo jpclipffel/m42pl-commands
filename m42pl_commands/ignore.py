@@ -6,7 +6,13 @@ from m42pl.commands import MetaCommand
 class Ignore(MetaCommand):
     _about_     = 'Does nothing'
     _aliases_   = ['ignore', 'pass', 'comment']
-    _syntax_    = '...'
+    _syntax_    = ''
+    _schema_    = {
+        'additionalProperties': {
+            'description': 'Source field properties'
+        }
+    }
+
     _grammar_   = {
         'start': dedent('''\
             start : /.+/

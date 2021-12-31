@@ -30,10 +30,10 @@ class URL(BaseURL):
                             charset: str|None = None, **kwargs):
         """Read and decodes the given :param:`response`.
 
-        :param response:    Partial response sent by server
-        :param mime_type:   Response's mime type, if any
-        :param charset:     Response's charset, if any
-        :param kwargs:      Other content type headers (ignored)
+        :param response: Partial response sent by server
+        :param mime_type: Response's mime type, if any
+        :param charset: Response's charset, if any
+        :param kwargs: Other content type headers (ignored)
         """
         # JSON
         if self.regex_mime_json.match(mime_type or ''):

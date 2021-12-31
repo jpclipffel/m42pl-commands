@@ -12,6 +12,31 @@ class Make(GeneratingCommand):
         '[[chunks=]<number>] [[frequency=]<seconds>]'
     )
     _aliases_   = ['make', 'makeevent', 'makeevents']
+    _schema_    = {
+        'properties': {
+            'id': {'type': 'number', 'description': 'Event count'},
+            'chunk': {
+                'type': 'object',
+                'properties': {
+                    'chunk': {'type': 'number', 'description': 'Current chunk'},
+                    'chunks': {'type': 'number', 'description': 'Chunks count'}
+                }
+            },
+            'count': {
+                'type': 'object',
+                'properties': {
+                    'begin': {'type': 'number', 'description': 'Minium event count in chunk'},
+                    'end': {'type': 'number', 'description': 'Maximum event count in chunk'}
+                }
+            },
+            'pipeline': {
+                'type': 'object',
+                'properties': {
+                    'name': {'type': 'string', 'description': 'Chunk pipeline name'}
+                }
+            }
+        }
+    }
 
     def __init__(self, count: int = 1, showinfo: bool = False,
                     frequency: float = 0.0, freqdelay: int = 1):

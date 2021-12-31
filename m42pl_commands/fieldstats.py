@@ -5,6 +5,7 @@ from m42pl.event import Event
 class FieldStats(BufferingCommand):
     _aliases_   = ['fieldstats', 'fieldsstats', 'fstats']
     _about_     = 'Compute fields statistics'
+    _schema_    = {'properties': {}} # type: ignore
 
     def __init__(self):
         super().__init__()

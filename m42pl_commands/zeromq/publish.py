@@ -18,15 +18,19 @@ class Publish(Producer):
 
     _aliases_   = ['zmq_pub', 'zmq_publish']
     _about_     = 'Publish events or events field(s) to ZMQ'
+    _schema_    = {'properties': {}} # type: ignore
 
     def __init__(self, topic: str = None, *args, **kwargs):
+        """
+        :param topic: ZMQ topic name or ``None``
+        """
         super().__init__(*args, topic=topic, **kwargs)
         self.args.update(**{
             'topic': Field(topic, default=b'')
         })
 
     async def setup(self, event, pipeline, context):
-        await super().setup(zmq.PUB, event, pipeline)
+        await super().setup(zmq.PUB, event, pipeline, context)
         # Encode topic
         if not isinstance(self.args.topic, bytes):
             try:
@@ -34,7 +38,7 @@ class Publish(Producer):
             except Exception:
                 pass
 
-    async def build_frames(self, event, pipeline) -> List[str|bytes]:
+    async def build_frames(self, event, pipeline, context) -> List[str|bytes]:
         """Returns a list of frames to be sent through ZMQ.
         """
         frames = []
@@ -53,6 +57,6 @@ class Publish(Producer):
         """
         if self.first_chunk:
             await self.socket.send_multipart(
-                await self.build_frames(event, pipeline)
+                await self.build_frames(event, pipeline, context)
             )
         yield event

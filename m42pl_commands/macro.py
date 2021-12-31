@@ -31,6 +31,7 @@ class RecordMacro(BaseMacro, MetaCommand):
     _about_     = '''Record a global macro (use the 'macro' command instead)'''
     _syntax_    = '<name> [ ... ] [notes]'
     _aliases_   = ['_recordmacro',]
+    _schema_    = {'properties': {}} # type: ignore
 
     def __init__(self, name: str, pipeline: str, notes: str = None):
         """
@@ -86,6 +87,7 @@ class RunMacro(BaseMacro, StreamingCommand):
     _about_     = '''Run a macro (use 'macro' command instead )'''
     _syntax_    = '[name=]<name> [{field}=<value>, ...]'
     _aliases_   = ['_macrorun', ]
+    _schema_    = {'additionalProperties': True}
 
     def __init__(self, name: str, macro_kwargs: dict = {}):
         """
@@ -135,6 +137,11 @@ class GetMacros(BaseMacro, GeneratingCommand):
     _about_     = 'Returns available macros'
     _syntax_    = ''
     _aliases_   = ['macros',]
+    _schema_    = {
+        'properties': {
+            'macro': {'description': 'Macro definition'}
+        }
+    }
 
     key_name    = 'macro'
 
@@ -153,6 +160,7 @@ class DelMacro(BaseMacro, MetaCommand):
     _about_     = 'Remove a macro'
     _syntax_    = '{name}'
     _aliases_   = ['delmacro',]
+    _schema_    = {'properties': {}} # type: ignore
 
     def __init__(self, name: str):
         """
@@ -189,6 +197,7 @@ class PurgeMacros(BaseMacro, MetaCommand):
     _about_     = 'Purges all macros'
     _syntax_    = ''
     _aliases_   = ['purgemacro', 'purgemacros']
+    _schema_    = {'properties': {}} # type: ignore
 
     async def target(self, event, pipeline, context):
         await pipeline.context.kvstore.remove(self.kvstore_prefix)
@@ -209,6 +218,7 @@ class Macro(MetaCommand):
     _about_     = 'Record a macro, run a macro or return macros list'
     _syntax_    = '[<name> [pipeline]]'
     _aliases_   = ['macro',]
+    _schema_    = {'properties': {}} # type: ignore
 
     def __new__(self, *args, **kwargs):
         if len(args) > 1 or len(kwargs) > 1 or 'pipeline' in kwargs:

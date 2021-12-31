@@ -6,6 +6,7 @@ class Head(StreamingCommand):
     _about_     = 'Keep only the firsts events'
     _syntax_    = '[[count=]<count>]'
     _aliases_   = ['head',]
+    _schema_    = {'properties': {}} # type: ignore
 
     def __init__(self, count: int = 1):
         """

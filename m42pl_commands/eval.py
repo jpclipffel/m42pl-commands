@@ -12,7 +12,11 @@ class Eval(StreamingCommand):
     _about_     = 'Evaluate a Python expression and assign result to a field'
     _syntax_    = '<field_name> = <expression> [, ...]'
     _aliases_   = ['eval', 'evaluate']
-    _schema_    = {'properties': {}}
+    _schema_    = {
+        'additionalProperties': {
+            'description': 'Evaluated fields'
+        }
+    }
     _grammar_   = OrderedDict(StreamingCommand._grammar_)
     # Eval does not uses the arguments grammar
     _grammar_.pop('arguments_rules')

@@ -22,25 +22,32 @@ from . import functions as stats_functions
 class StreamStats(StreamingCommand):
     """Aggregates events over functions results by fields values.
 
-    `StreamStats` performs a *streaming aggregation* on the incoming
-    events. Since its working on a data stream, events yields by 
-    `StreamStats` are partial statistical results (event #n may be
-    replaced by a future event #n+x).
+    ``StreamStats`` performs a *streaming aggregation* on the incoming
+    events. Since it is working on a data stream, events yields by 
+    ``StreamStats`` are partial statistical results (event ``n`` may
+    be replaced by a future event ``n+x``).
 
-    In order to track the latest result, events sharing the same
-    aggregation fields values also share the same signature: if you
-    receive an event with the same signature as a previous one, you
-    should update your calculation to take this new event values into
+    In order to track the latest result, all events sharing the same
+    aggregation fields values also share the same signature: if we
+    receive an event with the same signature as a previous one, we
+    should update our calculation to take this new event value into
     account.
     """
 
-    _aliases_ = ['_stream_stats',]
+    _about_     = 'Performs statistical operations on an events stream'
+    _syntax_    = '<function> [as <field>], ... by <field>, ... [with ...]'
+    _aliases_   = ['_stream_stats',]
+    _schema_    = {
+        'additionalProperties': {
+            'description': 'Aggregates and aggregation fields'
+        }
+    }
 
     def __init__(self, functions: list, fields: list, **kwargs):
         """
-        :param functions:   Aggregation functions list.
-                            Ex: `[('function_name', 'source_field', 'dest_field')]`
-        :param fields:      Aggregation fields list.
+        :param functions: Aggregation functions list
+            e.g. `[('function_name', 'source_field', 'dest_field')]`
+        :param fields: Aggregation fields list
         """
         super().__init__(functions, fields)
         # ---
@@ -67,8 +74,8 @@ class StreamStats(StreamingCommand):
             else:
                 raise Exception(f'Unknown stats function: {function_name}')
 
-    async def setup(self, event, pipeline, context):
-        await super().setup(event, pipeline, context)
+    # async def setup(self, event, pipeline, context):
+    #     await super().setup(event, pipeline, context)
 
     async def target(self, event, pipeline, context):
         # ---
@@ -102,59 +109,75 @@ class StreamStats(StreamingCommand):
 
 
 class PreStatsMerge(StreamingCommand, MergingCommand):
-    """Merges before running `stats`.
+    """Force-merges the pipeline before running ``StreamStats``.
     """
 
-    _aliases_ = ['_pre_stats_merge',]
+    _about_     = 'Force-merges the pipeline before running StreamStats'
+    _syntax_    = ''
+    _aliases_   = ['_pre_stats_merge',]
+    _schema_    = {'properties': {}} # type: ignore
 
     async def target(self, event, pipeline, context):
         yield event
 
 
-class PostStatsMerge(StreamingCommand, MergingCommand):
-    """Merges `stats` results.
-    """
+# class PostStatsMerge(StreamingCommand, MergingCommand):
+#     """Merges `stats` results.
+#     """
 
-    _aliases_ = ['_post_stats_merge',]
+#     _aliases_ = ['_post_stats_merge',]
 
-    async def target(self, event, pipeline, context):
-        yield event
+#     async def target(self, event, pipeline, context):
+#         yield event
 
 
-class PostStatsBuffer(DequeBufferingCommand):
-    """Buffer events yield by `stats`.
-    """
+# class PostStatsBuffer(DequeBufferingCommand):
+#     """Buffer events yield by `stats`.
+#     """
 
-    _aliases_ = ['_post_stats_buffer',]
+#     _aliases_ = ['_post_stats_buffer',]
 
-    def __init__(self, buffer: int = 10000, *args, **kwargs):
-        """
-        :param buffer:  Internal buffer size (i.e. the amount of
-                        different event to keep in buffer before
-                        yielding them).
-        """
-        super().__init__(buffer)
-        self.buffer_size = Field(buffer, type=int, default=10000)
+#     def __init__(self, buffer: int = 10000, *args, **kwargs):
+#         """
+#         :param buffer:  Internal buffer size (i.e. the amount of
+#                         different event to keep in buffer before
+#                         yielding them).
+#         """
+#         super().__init__(buffer)
+#         self.buffer_size = Field(buffer, type=int, default=10000)
 
-    async def setup(self, event, pipeline, context):
-        await super().setup(
-            event,
-            pipeline,
-            maxsize=await self.buffer_size.read(event, pipeline, context)
-        )
+#     async def setup(self, event, pipeline, context):
+#         await super().setup(
+#             event,
+#             pipeline,
+#             maxsize=await self.buffer_size.read(event, pipeline, context)
+#         )
 
-    # async def target(self, pipeline):
-    #     async for event in super().target(pipeline):
-    #         yield event
+#     # async def target(self, pipeline):
+#     #     async for event in super().target(pipeline):
+#     #         yield event
 
 
 class Stats(StreamingCommand):
-    """Stats command entry point.
+    """Returns a viable ``stats`` commands set.
+
+    This command returns other commands instances uppon calling, each
+    one being a part of the ``stats`` pipeline.
     """
 
-    _about_   = 'Performs statistical operations on an events stream'
-    _syntax_  = '<function> [as <field>], ... by <field>, ... [with ...]'
-    _aliases_ = ['stats', 'aggr', 'aggregate']
+    # _about_     = 'Performs statistical operations on an events stream'
+    # _syntax_    = '<function> [as <field>], ... by <field>, ... [with ...]'
+    # _aliases_   = ['stats', 'aggr', 'aggregate']
+    # _schema_    = {
+    #     'additionalProperties': {
+    #         'description': 'Aggregates and aggregation fields'
+    #     }
+    # }
+
+    _about_     = StreamStats._about_
+    _syntax_    = StreamStats._syntax_
+    _aliases_   = ['stats', 'aggr', 'aggregate']
+    _schema_    = StreamStats._schema_
 
     _grammar_ = OrderedDict(StreamingCommand._grammar_)
     #_grammar_.pop('collections_rules')
@@ -234,9 +257,11 @@ class StatsTable(BufferingCommand):
         'stats_output',
         'stats_print'
     ]
+    _schema_    = {'properties': {}} # type: ignore
 
     def __init__(self, buffer: int = 126):
         """
+        :param buffer: Internal buffer size
         """
         super().__init__(buffer)
         self.buffer = Field(buffer, default=126)

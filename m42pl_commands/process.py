@@ -11,6 +11,15 @@ class Process(GeneratingCommand):
     _about_     = 'Runs a process and yields its output line by line'
     _aliases_   = ['process',]
     _syntax_    = '{command name} [argument, ...]'
+    _schema_    = {
+        'properties': {
+            'line': {
+                'type': 'string',
+                'description': 'A line emitted by the process'
+            }
+        }
+    }
+
     _grammar_   = OrderedDict(GeneratingCommand._grammar_)
     _grammar_['start'] = dedent('''\
         start : args

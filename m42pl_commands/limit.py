@@ -15,7 +15,7 @@ class Limit(StreamingCommand):
     _about_     = 'Run a sub-pipeline for a limited amount of event'
     _syntax_    = '[count=]<event count> <pipeline>'
     _aliases_   = ['limit',]
-    _schema_    = {'properties': {}}
+    _schema_    = {'properties': {}} # type: ignore
 
     def __init__(self, count, pipeline):
         """

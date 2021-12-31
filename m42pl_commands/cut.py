@@ -5,6 +5,9 @@ from m42pl.fields import Field, FieldsMap
 
 
 class Cut(StreamingCommand):
+    """Cuts (splits) a field using a regular expression.
+    """
+
     _about_     = 'Cut (split) a field using a regular expression'
     _syntax_    = '[field=]{field} [expr=]<regex> [[clean=]<yes|no>]'
     _aliases_   = ['cut', 'split']
@@ -19,8 +22,8 @@ class Cut(StreamingCommand):
 
     def __init__(self, field, expr: str, clean: bool = True):
         """
-        :param field:   Source field to cut
-        :param expr:    Regular expression
+        :param field: Source field to cut
+        :param expr: Regular expression
         """
         super().__init__(field, expr, clean)
         self.field = Field(field)

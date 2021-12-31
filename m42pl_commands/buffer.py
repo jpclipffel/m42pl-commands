@@ -26,6 +26,7 @@ class Buffer(DequeBufferingCommand):
         await super().setup(
             event,
             pipeline,
+            context,
             await self.size.read(event, pipeline, context)
         )
         self.showchunk = await self.showchunk.read(event, pipeline, context)

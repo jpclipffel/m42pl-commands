@@ -24,6 +24,9 @@ class Subscribe(Consumer):
 
 
     def __init__(self, topic: str|list = [], *args, **kwargs):
+        """
+        :param topic: ZMQ topic name or list of names
+        """
         super().__init__(*args, topic=topic, **kwargs)
         # NB: In PUB/SUB, the client socket must subscribe at least to an
         # empty topic (''), meaning it will receive all messages (no filter).

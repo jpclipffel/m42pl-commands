@@ -10,6 +10,8 @@ class Fields(StreamingCommand):
     _about_     = 'Keep (+) or remove (-) the selected fields'
     _syntax_    = '[+|-] field_name [, ...]'
     _aliases_   = ['fields',]
+    _schema_    = {'properties': {}} # type: ignore
+
     _grammar_   = OrderedDict(StreamingCommand._grammar_)
     _grammar_['start'] = dedent('''\
         MODE    : "+" | "-"

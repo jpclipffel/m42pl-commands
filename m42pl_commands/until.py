@@ -16,11 +16,12 @@ class Until(GeneratingCommand):
     _about_     = 'Run a sub-pipeline until a field become true'
     _syntax_    = '<field> <pipeline>'
     _aliases_   = ['until',]
+    _schema_    = {'properties': {}} # type: ignore
 
     def __init__(self, field: str, pipeline: str):
         """
-        :param field:       Conditional field
-        :param pipeline:    Pipeline ID
+        :param field: Conditional expression
+        :param pipeline: Pipeline ID
         """
         super().__init__(field, pipeline)
         self.field = Field(field)
@@ -28,8 +29,8 @@ class Until(GeneratingCommand):
 
     async def setup(self, event, pipeline, context):
         self.runner = InfiniteRunner(
-            pipeline.context.pipelines[self.pipeline.name],
-            pipeline.context,
+            context.pipelines[self.pipeline.name],
+            context,
             event
         )
         await self.runner.setup()
@@ -38,7 +39,7 @@ class Until(GeneratingCommand):
         source_event = event
         while True:
             async for next_event in self.runner(source_event):
-                if (await self.field.read(next_event, pipeline)):
+                if (await self.field.read(next_event, pipeline, context)):
                     yield next_event
                     return
                 latest_event = next_event

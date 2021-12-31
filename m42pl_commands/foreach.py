@@ -21,6 +21,7 @@ class Foreach(StreamingCommand):
     _about_     = 'Run a sub-pipeline for each event'
     _syntax_    = '<pipeline>'
     _aliases_   = ['foreach',]
+    _schema_    = {'properties': {}} # type: ignore
     
     _grammar_   = OrderedDict(StreamingCommand._grammar_)
     _grammar_['start'] = dedent('''\
@@ -40,8 +41,8 @@ class Foreach(StreamingCommand):
 
     async def setup(self, event, pipeline, context):
         self.runner = InfiniteRunner(
-            pipeline.context.pipelines[self.pipeline.name],
-            pipeline.context,
+            context.pipelines[self.pipeline.name],
+            context,
             event
         )
         await self.runner.setup()

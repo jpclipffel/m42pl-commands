@@ -13,8 +13,14 @@ class Pull(Consumer):
     _about_     = 'Pull events from ZMQ'
     _schema_    = {
         'properties': {
-            'topic': {'type': 'string', 'description': 'ZMQ topic'},
-            'chunk': {'type': 'array', 'description': 'Dispatcher chunk ID and chunks count'}
+            'topic': {
+                'type': 'string',
+                'description': 'ZMQ topic'
+            },
+            'chunk': {
+                'type': 'array',
+                'description': 'Dispatcher chunk ID and chunks count'
+            }
         }
     }
 
@@ -22,7 +28,7 @@ class Pull(Consumer):
         super().__init__(*args, **kwargs)
 
     async def setup(self, event, pipeline, context):
-        await super().setup(zmq.PULL, event, pipeline)
+        await super().setup(zmq.PULL, event, pipeline, context)
     
     async def target(self, event, pipeline, context):
         while True:

@@ -50,7 +50,7 @@ class KVWrite(MetaCommand):
     
     async def target(self, event, pipeline, context):
         if event:
-            await pipeline.context.kvstore.write(
+            await context.kvstore.write(
                 await self.key.read(event, pipeline, context),
                 await self.value.read(event, pipeline, context)
             )
@@ -111,7 +111,7 @@ class KVRead(GeneratingCommand):
         if event:
             yield await self.dest.write(
                 event,
-                await pipeline.context.kvstore.read(
+                await context.kvstore.read(
                     await self.key.read(event, pipeline, context)
                 )
             )
@@ -137,7 +137,7 @@ class KVItems(GeneratingCommand):
         self.key = await self.key.read(event, pipeline, context)
 
     async def target(self, event, pipeline, context):
-        async for k, i in pipeline.context.kvstore.items(self.key):
+        async for k, i in context.kvstore.items(self.key):
             yield await LiteralField(k).write(derive(event), i)
 
 
@@ -154,6 +154,6 @@ class KVDelete(MetaCommand):
         self.key = Field(key)
 
     async def target(self, event, pipeline, context):
-        await pipeline.context.kvstore.delete(
+        await context.kvstore.delete(
             await self.key.read(event, pipeline, context)
         )

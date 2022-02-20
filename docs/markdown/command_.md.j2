@@ -40,6 +40,14 @@ grand_parent: M42PL
 ```
 {% endblock -%}
 
+{%- block Schema %}
+## Schema
+
+```json
+{{ command.schema | jsonify(indent=2) }}
+```
+{% endblock -%}
+
 {%- block Description %}
 ## Description
 {% endblock -%}

@@ -45,6 +45,9 @@ value of the field `is_even`:
 }
 ```
 
+One can check the internal aggregation structures using the `aggregates` functor
+(this functor should be treated as a debug functor).
+
 One can also customize some aspect of `stats`'s internals by adding a `with`
 clause at the end of the command. This is not a standard use case: Please
 refers to the technical documentation for more information.
@@ -54,17 +57,28 @@ refers to the technical documentation for more information.
 {% block Description %}
 {{ super() }}
 `stats` aggregates events by field(s) and compute _statistical values_ from the
-events stream.
+events stream using _stats functions_.
+
+It is important to understand that the event stream is seen as infinite. This
+implies two majors effects:
+
+* `stats` memory will grow overtime
+* `stats` yields events whoms signatures is computed using their aggregated fields name
+
+If you whish to display `stats` results, you may use either the `output` command
+or `print_stats`. The advantage of `print_stats` is that it will display a
+continuously updated data table instead of JSON object.
 
 ### Stats functions
 
-| Function | Syntax            | Description                           |
-|----------|-------------------|---------------------------------------|
-| `count`  | `count`           | Count the number of events            |
-| `min`    | `min(<field>)`    | Returns the minimum value of `field`  |
-| `max`    | `max(<field>)`    | Returns the maximum value of `field`  |
-| `values` | `values(<field>)` | Returns the list of values of `field` |
-| `first`  | `first(<field>)`  | Returns the first value of `field`    |
-| `last`   | `last(<field>)`   | Returns the latest value of `field`   |
+| Function     | Syntax                       | Description                                 |
+|--------------|------------------------------|---------------------------------------------|
+| `count`      | `count`, `count()`           | Count the number of events                  |
+| `min`        | `min(<field>)`               | Returns the minimum value of `field`        |
+| `max`        | `max(<field>)`               | Returns the maximum value of `field`        |
+| `values`     | `values(<field>)`            | Returns the list of values of `field`       |
+| `first`      | `first(<field>)`             | Returns the first value of `field`          |
+| `last`       | `last(<field>)`              | Returns the latest value of `field`         |
+| `aggregates` | `aggregates`, `aggregates()` | Returns the internal aggregation structures |
 
 {% endblock %}

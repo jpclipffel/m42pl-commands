@@ -25,8 +25,7 @@ def load_tests(loader, tests, pattern):
     We then create a new test class for every command class. Unlike
     command-specific tests, we do not care for the command type
     (generating, streaming, etc.) and we directly inherit from the test
-    base class `m42pl.utils.unittest.Command` (we just care about the
-    generic tests).
+    base class ``m42pl.utils.unittest.Command``.
 
     Unit test custom loader reference:
     https://docs.python.org/3/library/unittest.html#load-tests-protocol

@@ -45,7 +45,7 @@ class BaseURL(GeneratingCommand):
         }
     }
 
-    def __init__(self, urls: list = [], method: str = 'GET',
+    def __init__(self, urls: str, method: str = 'GET',
                     headers: dict = {}, data: dict = None, json: dict = None,
                     frequency: int = -1, count: int = 1):
         """

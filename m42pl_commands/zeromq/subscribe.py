@@ -35,7 +35,7 @@ class Subscribe(Consumer):
         })
 
     async def setup(self, event, pipeline, context):
-        await super().setup(zmq.SUB, event, pipeline)
+        await super().setup(zmq.SUB, event, pipeline, context)
         # Configure topic (envelope filtering)
         self.logger.info(f'registering topics: {self.args.topic}')
         for topic in self.args.topic:

@@ -9,23 +9,23 @@ from m42pl.errors import CommandError
 class BaseMacro:
     """Base macros-related command class.
 
-    :ivar kvstore_prefix:   KVStore keys prefix
-    :ivar macros_index:     List of macros in the KVStore 
+    :ivar kvstore_prefix: KVStore keys prefix
+    :ivar macros_index: Key to the list of macros
     """
 
     kvstore_prefix = 'macros:'
     macros_index = f'{kvstore_prefix}current'
 
     def macro_fqdn(self, name: str) -> str:
-        """Returns a full macro name, i.e. with correct prefix.
+        """Returns a macro full name (prefix + name)
 
-        :param name:    Macro name as defined by user
+        :param name: Macro name as defined by user
         """
         return f'{self.kvstore_prefix}{name}'
 
 
 class RecordMacro(BaseMacro, MetaCommand):
-    """Record (define and save) a global macro.
+    """Records a macro.
     """
 
     _about_     = '''Record a global macro (use the 'macro' command instead)'''
@@ -35,9 +35,9 @@ class RecordMacro(BaseMacro, MetaCommand):
 
     def __init__(self, name: str, pipeline: str, notes: str = None):
         """
-        :param name:        Macro name
-        :param pipeline:    Macro pipeline
-        :param notes:       Macro's notes
+        :param name: Macro name
+        :param pipeline: Macro code
+        :param notes: Macro notes
         """
         super().__init__(name, pipeline)
         self.name = Field(name, default=name)
@@ -48,20 +48,20 @@ class RecordMacro(BaseMacro, MetaCommand):
         # Get macro name
         macro_name = await self.name.read(event, pipeline, context)
         # Renders macros dict
-        macro_dict = pipeline.context.pipelines[self.pipeline.name].to_dict()
+        macro_dict = context.pipelines[self.pipeline.name].to_dict()
         # Write macro to KVStore
-        await pipeline.context.kvstore.write(
+        await context.kvstore.write(
             self.macro_fqdn(macro_name),
             macro_dict
         )
         # Write macro reference to KVStore macros list
-        # macros = await pipeline.context.kvstore.read(self.macros_index) or []
-        # await pipeline.context.kvstore.write(
+        # macros = await context.kvstore.read(self.macros_index) or []
+        # await context.kvstore.write(
         #     self.macros_index,
         #     macros + [macro_name,]
         # )
-        macros = await pipeline.context.kvstore.read(self.macros_index, default={})
-        await pipeline.context.kvstore.write(
+        macros = await context.kvstore.read(self.macros_index, default={})
+        await context.kvstore.write(
             self.macros_index,
             {
                 **macros,
@@ -104,7 +104,7 @@ class RunMacro(BaseMacro, StreamingCommand):
     async def setup(self, event, pipeline, context):
         macro_name = await self.name.read(event, pipeline, context)
         macro_fqdn = self.macro_fqdn(macro_name)
-        macro_dict = await pipeline.context.kvstore.read(macro_fqdn)
+        macro_dict = await context.kvstore.read(macro_fqdn)
         if macro_dict is None:
             raise CommandError(
                 self,
@@ -120,7 +120,7 @@ class RunMacro(BaseMacro, StreamingCommand):
         # Init runner
         self.runner = InfiniteRunner(
             self.pipeline,
-            pipeline.context,
+            context,
             event
         )
         await self.runner.setup()
@@ -146,7 +146,7 @@ class GetMacros(BaseMacro, GeneratingCommand):
     key_name    = 'macro'
 
     async def target(self, event, pipeline, context):
-        macros = await pipeline.context.kvstore.read(self.macros_index, default={})
+        macros = await context.kvstore.read(self.macros_index, default={})
         for name, macro in macros.items():
             if macro:
                 yield derive(event, {
@@ -155,8 +155,9 @@ class GetMacros(BaseMacro, GeneratingCommand):
 
 
 class DelMacro(BaseMacro, MetaCommand):
-    """Removes a macro.
+    """Deletes a macro.
     """
+
     _about_     = 'Remove a macro'
     _syntax_    = '{name}'
     _aliases_   = ['delmacro',]
@@ -164,7 +165,7 @@ class DelMacro(BaseMacro, MetaCommand):
 
     def __init__(self, name: str):
         """
-        :param name:    Macro name.
+        :param name: Macro name.
         """
         super().__init__(name)
         self.name = Field(name, default=name, seqn=True)
@@ -174,16 +175,16 @@ class DelMacro(BaseMacro, MetaCommand):
         for macro_name in macro_names:
             # Remove macro from KVStore
             try:
-                await pipeline.context.kvstore.delete(
+                await context.kvstore.delete(
                     self.macro_fqdn(macro_name)
                 )
             except Exception:
                 pass
             # Remove macro reference from KVStore macros list
             try:
-                macros = await pipeline.context.kvstore.read(self.macros_index, default={})
+                macros = await context.kvstore.read(self.macros_index, default={})
                 macros.pop(macro_name)
-                await pipeline.context.kvstore.write(
+                await context.kvstore.write(
                     self.macros_index,
                     macros
                 )
@@ -192,16 +193,17 @@ class DelMacro(BaseMacro, MetaCommand):
 
 
 class PurgeMacros(BaseMacro, MetaCommand):
-    """Purges all macros.
+    """Deletes all macros.
     """
+
     _about_     = 'Purges all macros'
     _syntax_    = ''
     _aliases_   = ['purgemacro', 'purgemacros']
     _schema_    = {'properties': {}} # type: ignore
 
     async def target(self, event, pipeline, context):
-        await pipeline.context.kvstore.remove(self.kvstore_prefix)
-        await pipeline.context.kvstore.remove(self.macros_index)
+        await context.kvstore.remove(self.kvstore_prefix)
+        await context.kvstore.remove(self.macros_index)
 
 
 class CloseMacro(StreamingCommand):
@@ -215,6 +217,7 @@ class Macro(MetaCommand):
     :class:`RunMacro` or :class:`GetMacros` depending on what
     parameters are given.
     """
+    
     _about_     = 'Record a macro, run a macro or return macros list'
     _syntax_    = '[<name> [pipeline]]'
     _aliases_   = ['macro',]

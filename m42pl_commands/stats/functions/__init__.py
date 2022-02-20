@@ -1,6 +1,7 @@
 from .count import Count
 from.distinctcount import DistinctCount
 from .values import Values
+from ._list import List
 from .minmax import Min, Max
 from .firstlast import First, Last
 
@@ -14,6 +15,7 @@ names = {
     'dc': DistinctCount,
     'distinctcount': DistinctCount,
     'values': Values,
+    'list': List,
     'min': Min,
     'max': Max,
     'first': First,

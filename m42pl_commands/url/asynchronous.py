@@ -56,6 +56,28 @@ class URL(BaseURL):
             mime_type, mime_props = cgi.parse_header(
                 response.headers.get('content-type', '').lower()
             )
+            # ---
+            # async for chunk in response.content.iter_chunked(1):
+            #     yield {
+            #     'time': time.time_ns(),
+            #     'request': {
+            #         'method': response.method,
+            #         'url': str(response.url),
+            #         'headers': request.get('headers', {}),
+            #         'data': request.get('data', {})
+            #     },
+            #     'response': {
+            #         'status': response.status,
+            #         'reason': response.reason,
+            #         'mime': {
+            #             **{'type': mime_type},
+            #             **mime_props
+            #         },
+            #         'headers': dict(response.headers),
+            #         'content': chunk
+            #     }
+            # }
+            # ---
             # Generate and return response data
             return {
                 'time': time.time_ns(),
@@ -107,9 +129,16 @@ class URL(BaseURL):
                                     'url': url
                                 }
                             }))
+                # ---
+                # for request in requests:
+                #     async for chunk in request:
+                #         yield derive(event, chunk)
+                # ---
                 # Execute requests and yield them as soon as possible
                 for request in asyncio.as_completed(requests):
+                    # yield derive(event, await anext(request))
                     yield derive(event, data=await request)
+                # ---
                 # Wait before next requests batch
                 if fields.frequency > 0:
                     await asyncio.sleep(fields.frequency)

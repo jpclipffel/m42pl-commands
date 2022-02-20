@@ -30,7 +30,7 @@ class Where(StreamingCommand):
         super().__init__(expression)
         self.expr = Evaluator(expression)
 
-    async def target(self, event, piepline):
+    async def target(self, event, pipeline, context):
         try:
             if self.expr(event['data']):
                 yield event

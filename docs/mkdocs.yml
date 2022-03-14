@@ -1,0 +1,22 @@
+# code: language=YAML tabSize=2
+
+site_name: M42PL - Core commands
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: green
+      accent: green
+      toggle:
+        icon: material/toggle-switch-off-outline 
+        name: Switch to dark mode
+    - scheme: default
+      primary: green
+      accent: green
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+
+nav:
+  - 'Home': index.md

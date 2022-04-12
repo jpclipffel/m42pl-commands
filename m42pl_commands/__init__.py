@@ -36,7 +36,7 @@ from . import writefile
 from . import url
 
 # Server
-from . import http_server, server
+from . import http_server, server, mpl_server
 
 # ZMQ
 from . import zeromq

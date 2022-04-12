@@ -18,5 +18,10 @@ theme:
         icon: material/toggle-switch
         name: Switch to light mode
 
+plugins:
+  - search
+  - awesome-pages
+
 nav:
   - 'Home': index.md
+  - ...

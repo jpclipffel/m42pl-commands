@@ -64,7 +64,8 @@ class Producer(Base, StreamingCommand, MergingCommand):
         self.context = zmq.asyncio.Context.instance()
         # Create and bind socket
         self.socket = self.context.socket(sock_type)
-        self.socket.bind(self.args.url)
+        # self.socket.bind(self.args.url)
+        self.socket.connect(self.args.url)
         await sleep(0.25)
 
     def encode(self, data):
@@ -113,7 +114,8 @@ class Consumer(Base, GeneratingCommand):
         self.context = zmq.asyncio.Context.instance()
         # Create and connect socket
         self.socket = self.context.socket(sock_type)
-        self.socket.connect(self.args.url)
+        # self.socket.connect(self.args.url)
+        self.socket.bind(self.args.url)
 
     async def __aexit__(self, *args, **kwargs) -> None:
         """Teardown ZMQ.

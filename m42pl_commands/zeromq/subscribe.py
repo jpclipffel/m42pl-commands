@@ -22,7 +22,6 @@ class Subscribe(Consumer):
         }
     }
 
-
     def __init__(self, topic: str|list = [], *args, **kwargs):
         """
         :param topic: ZMQ topic name or list of names

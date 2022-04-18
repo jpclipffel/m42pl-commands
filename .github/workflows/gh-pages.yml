@@ -36,7 +36,7 @@ jobs:
         with:
           # args: run docs/generate.mpl -e '{"render_mode":"markdown", "render_path":"docs/commands"}' --dispatcher-kwargs '{"workdir":"docs/"}'
           entrypoint: python3.10
-          args: --version
+          args: -m m42pl
          #  args: -m m42pl run docs/generate.mpl -e '{"render_mode":"markdown", "render_path":"docs/commands"}' --dispatcher-kwargs '{"workdir":"docs/"}'
 
 

@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 setup(
@@ -6,15 +6,11 @@ setup(
   author='@jpclipffel',
   url='https://github.com/jpclipffel/m42pl-commands',
   version='1.0.0',
-  packages=['m42pl_commands',],
+  packages=find_packages(),
   install_requires=[
-    # 'm42pl',
+    'm42pl',
     # ---
-    # 'msgpack>=1.0.3',
-    # 'zmq',
     'pyzmq>=22.3.0',
-    # 'redis>=4.0.2',
-    # 'requests',
     'aiohttp>=3.8.1',
     'pygments>=2.10.0',
     'lxml>=4.7.1',

@@ -17,6 +17,7 @@ jobs:
         uses: docker://ghcr.io/jpclipffel/m42pl:latest
         with:
           args: run docs/generate.mpl -e "{\"render_mode\":\"markdown\",\"render_path\":\"docs/commands\"}" --dispatcher-kwargs "{\"workdir\":\"docs/\"}" -k "fake"
+          options: --user root
           # entrypoint: python3.10
           # args: -m m42pl
           # args: -m m42pl run docs/generate.mpl -e '{"render_mode":"markdown", "render_path":"docs/commands"}' --dispatcher-kwargs '{"workdir":"docs/"}'

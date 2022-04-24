@@ -12,12 +12,14 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v2
+      
+      - name: Setup permissions
+        run: chmod -R o+rw docs/commands/
 
       - name: Generate M42PL commands markdown
         uses: docker://ghcr.io/jpclipffel/m42pl:latest
         with:
           args: run docs/generate.mpl -e "{\"render_mode\":\"markdown\",\"render_path\":\"docs/commands\"}" --dispatcher-kwargs "{\"workdir\":\"docs/\"}" -k "fake"
-          options: --user root
           # entrypoint: python3.10
           # args: -m m42pl
           # args: -m m42pl run docs/generate.mpl -e '{"render_mode":"markdown", "render_path":"docs/commands"}' --dispatcher-kwargs '{"workdir":"docs/"}'

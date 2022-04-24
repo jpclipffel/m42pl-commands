@@ -24,6 +24,9 @@ jobs:
           # args: -m m42pl
           # args: -m m42pl run docs/generate.mpl -e '{"render_mode":"markdown", "render_path":"docs/commands"}' --dispatcher-kwargs '{"workdir":"docs/"}'
 
+      - name: Debug
+        run: find docs/
+
       - name: Setup Python
         uses: actions/setup-python@v2
         with:

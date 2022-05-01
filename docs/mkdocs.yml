@@ -1,7 +1,29 @@
 # code: language=YAML tabSize=2
 
+# General
 site_name: M42PL - Core commands
 
+# Navigation
+nav:
+  - "Home": "index.md"
+  - ...
+
+# Source repository
+repo_url: https://github.com/jpclipffel/m42pl-commands
+repo_name: jpclipffel/m42pl-commands
+edit_uri: ""
+src_uri: ""
+
+# Markdown extensions
+markdown_extensions:
+  - admonition
+
+# Plugins
+plugins:
+  - search
+  - awesome-pages
+
+# Theme confoguration
 theme:
   name: material
   palette:
@@ -9,7 +31,7 @@ theme:
       primary: green
       accent: green
       toggle:
-        icon: material/toggle-switch-off-outline 
+        icon: material/toggle-switch-off-outline
         name: Switch to dark mode
     - scheme: default
       primary: green
@@ -17,11 +39,5 @@ theme:
       toggle:
         icon: material/toggle-switch
         name: Switch to light mode
-
-plugins:
-  - search
-  - awesome-pages
-
-nav:
-  - 'Home': index.md
-  - ...
+  logo: "assets/Logo - Text - White.png"
+  favicon: "assets/Logo - Text - White.png"

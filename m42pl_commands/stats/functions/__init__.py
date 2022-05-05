@@ -4,6 +4,7 @@ from .values import Values
 from ._list import List
 from .minmax import Min, Max
 from .firstlast import First, Last
+from .sum import Sum
 
 from .aggregates import Aggregates
 
@@ -20,6 +21,7 @@ names = {
     'max': Max,
     'first': First,
     'last': Last,
+    'sum': Sum,
     # ---
     'aggregates': Aggregates
 }

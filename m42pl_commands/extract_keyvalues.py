@@ -27,7 +27,7 @@ class ExtractKV(StreamingCommand):
             Defaults to the source field
         """
         super().__init__(field, kvdelim, pairdelim, dest)
-        self.field = Field(field)
+        self.field = Field(field, default='')
         self.kvdelim = Field(kvdelim, type=str, default='=')
         self.pairdelim = Field(pairdelim, type=str, default=',')
         self.dest = dest and Field(dest) or self.field
@@ -42,10 +42,13 @@ class ExtractKV(StreamingCommand):
 
     async def target(self, event, pipeline, context):
         line = await self.field.read(event, pipeline, context)
-        pairs = [
-            kv for kv in [
-                self.kvdelim.split(pair) for pair
-                in filter(None, self.pairdelim.split(line))
-            ] if len(kv) == 2
-        ]
-        yield await self.dest.write(event, dict(pairs))
+        try:
+            pairs = [
+                kv for kv in [
+                    self.kvdelim.split(pair) for pair
+                    in filter(None, self.pairdelim.split(line))
+                ] if len(kv) == 2
+            ]
+            yield await self.dest.write(event, dict(pairs))
+        except Exception:
+            yield event

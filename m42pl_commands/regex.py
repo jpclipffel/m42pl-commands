@@ -72,5 +72,6 @@ class Regex(StreamingCommand):
         # - AttributeError is raised when regex fails and `.groupdict()`
         #   does not exists.
         except AttributeError:
+        # except Exception:
             pass
         yield event

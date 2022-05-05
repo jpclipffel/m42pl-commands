@@ -32,6 +32,7 @@ class Grok(StreamingCommand):
             }
 
     def __init__(self, expression, src, dest):
+        super().__init__(expression, src, dest)
         self.expression = Field(expression)
         self.src = Field(src)
         self.dest = dest and Field(dest).name or ''

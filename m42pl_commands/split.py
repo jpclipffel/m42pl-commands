@@ -2,7 +2,7 @@ from copy import deepcopy
 
 from m42pl.commands import StreamingCommand
 from m42pl.fields import Field
-from m42pl.event import Event
+from m42pl.event import Event, derive
 
 
 class Split(StreamingCommand):
@@ -29,7 +29,9 @@ class Split(StreamingCommand):
 
     async def target(self, event, pipeline, context):
         keys = await self.keys.read(event, pipeline, context)
+        # print(await self.field.read(event, pipeline, context))
         for i, item in enumerate(await self.field.read(event, pipeline, context)):
+            print(i, item)
             if isinstance(item, dict):
                 yield Event(data=item)
             elif isinstance(item, (list, tuple)):
@@ -42,3 +44,5 @@ class Split(StreamingCommand):
                     yield Event(data={
                         await self.key.read(event, pipeline, context): item
                     })
+            else:
+                yield await self.field.write(derive(event), item)

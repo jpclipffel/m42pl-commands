@@ -13,7 +13,7 @@ class Output(DequeBufferingCommand, MergingCommand):
     """
 
     _about_     = 'Prints events'
-    _syntax_    = '[[format=](hjson|raw|...)] [[buffer=]<number>]'
+    _syntax_    = '[[format=]<hjson|raw|...>] [[buffer=]<number>]'
     _aliases_   = ['output', 'print']
     _schema_    = {'properties': {}} # type: ignore
 

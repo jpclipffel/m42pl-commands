@@ -1,5 +1,5 @@
 # M42PL language
-from . import mpl_commands, kv, macro
+from . import mpl_commands, kv, macro, mpl_settings
 
 # Debug
 from . import output
@@ -10,14 +10,14 @@ from . import mpi
 # Control flow
 from . import (
     ignore, echo, foreach, until, sleep, assertion,
-    buffer, head, tailf, limit
+    buffer, head, tailf, limit, parallel
 )
 
 # Data manipulation
 from . import (
     rename, eval, regex, xpath, jsonpath, stats, jinja, parse_json,
     encoding, extract_keyvalues, extract_maps, cut,
-    expand, split, fields, wrap, fieldstats, grok
+    expand, split, fields, wrap, fieldstats, grok, delta
 )
 
 # Data typing

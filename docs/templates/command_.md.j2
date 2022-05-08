@@ -5,7 +5,11 @@ title: {{ command.alias }}
 parent: Core commands
 grand_parent: M42PL
 ---
-
+{%- elif render_mode | default('') == 'mkdocs' -%}
+---
+tags:
+  - {{ command.type | default('Command') }}
+---
 {% endif -%}
 
 # {{ command.alias }}

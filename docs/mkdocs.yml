@@ -6,6 +6,7 @@ site_name: M42PL - Core commands
 # Navigation
 nav:
   - "Home": "index.md"
+  - "Commands type": "tags.md"
   - ...
 
 # Source repository
@@ -16,25 +17,28 @@ src_uri: ""
 
 # Markdown extensions
 markdown_extensions:
+  - meta
   - admonition
 
 # Plugins
 plugins:
   - search
   - awesome-pages
+  - tags:
+      tags_file: tags.md
 
 # Theme confoguration
 theme:
   name: material
   palette:
     - scheme: slate
-      primary: green
-      accent: green
+      primary: black
+      accent: light green
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to dark mode
     - scheme: default
-      primary: green
+      primary: black
       accent: green
       toggle:
         icon: material/toggle-switch

@@ -4,7 +4,8 @@
 M42PL can run without the core commands, most deployment will include the
 `m42pl-commands` package.
 
-Commands are documented under the **Commands** menu on the left sidebar.
+Commands are documented under the **Commands** section, and are regrouped by
+tags on the [Commands type pags](./tags.md).
 
 # About this documentation
 

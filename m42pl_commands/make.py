@@ -8,8 +8,8 @@ from m42pl.fields import Field, FieldsMap
 class Make(GeneratingCommand):
     _about_     = 'Generates and returns new events'
     _syntax_    = (
-        '[[count=]<number>] [[showinfo=](yes|no)]'
-        '[[chunks=]<number>] [[frequency=]<seconds>]'
+        '[[count=]<number>] [[showinfo=](yes|no)] '
+        '[[frequency=]<seconds>]'
     )
     _aliases_   = ['make', 'makeevent', 'makeevents']
     _schema_    = {

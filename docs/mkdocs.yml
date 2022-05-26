@@ -13,7 +13,6 @@ nav:
 repo_url: https://github.com/jpclipffel/m42pl-commands
 repo_name: jpclipffel/m42pl-commands
 edit_uri: ""
-src_uri: ""
 
 # Markdown extensions
 markdown_extensions:
@@ -27,7 +26,7 @@ plugins:
   - tags:
       tags_file: tags.md
 
-# Theme confoguration
+# Theme configuration
 theme:
   name: material
   palette:

@@ -77,7 +77,7 @@ class StreamStats(StreamingCommand):
     # async def setup(self, event, pipeline, context):
     #     await super().setup(event, pipeline, context)
 
-    async def target(self, event, pipeline, context):
+    async def target(self, event, pipeline, context, *args, **kwargs):
         # ---
         # Create new event which will holds the aggregated values
         stated_event = Event(meta={
@@ -97,8 +97,9 @@ class StreamStats(StreamingCommand):
             await field.write(stated_event, value)
         # ---
         # Update source event and new event signatures
-        event['sign'] = signature.hexdigest()
-        stated_event['sign'] = signature.hexdigest()
+        # event['sign'] = signature.hexdigest()
+        # stated_event['sign'] = signature.hexdigest()
+        event['sign'] = stated_event['sign'] = signature.hexdigest()
         # ---
         # Compute and add the stated fields to the new event
         for field, function in self.stated_fields.items():
@@ -117,7 +118,7 @@ class PreStatsMerge(StreamingCommand, MergingCommand):
     _aliases_   = ['_pre_stats_merge',]
     _schema_    = {'properties': {}} # type: ignore
 
-    async def target(self, event, pipeline, context):
+    async def target(self, event, *args, **kwargs):
         yield event
 
 
@@ -281,7 +282,7 @@ class StatsTable(BufferingCommand):
         # Init view
         self.stdscr.addstr(0, 0, 'Pipeline runing')
 
-    async def target(self, pipeline):
+    async def target(self, pipeline, *args, **kwargs):
         # Get new events from queue and update table
         async for event in super().target(pipeline):
             self.events[signature(event)] = event

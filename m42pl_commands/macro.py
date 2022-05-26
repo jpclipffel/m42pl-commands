@@ -68,6 +68,7 @@ class RecordMacro(BaseMacro, MetaCommand):
                 **{
                     macro_name: {
                         'notes': await self.notes.read(event, pipeline, context),
+                        'source': macro_dict
                     }
                 }
             }

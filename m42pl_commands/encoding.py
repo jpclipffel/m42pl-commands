@@ -133,6 +133,7 @@ class Codecs(StreamingCommand):
     }
 
     def __init__(self):
+        super().__init__()
         self.field = Field('codec')
 
     async def target(self, event, pipeline, context):

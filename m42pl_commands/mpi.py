@@ -13,16 +13,16 @@ Channel = Union[Connection, Queue]
 class MPIBase:
     """Base class for MPI send & receive commands.
 
-    :ivar msgpack_field:    Message pack fields name
+    :ivar msgpack_field: Message pack fields name
     """
 
     msgpack_field = '__mpi__'
 
     def __init__(self, chan: Channel):
         """
-        :param chan:    Multiprocessing's Pipe connection or Queue
-        :ivar read:     Channel read method (receive data)
-        :ivar write:    Channel write method (send data)
+        :param chan: Multiprocessing's Pipe connection or Queue
+        :ivar read: Channel read method (receive data)
+        :ivar write: Channel write method (send data)
         """
         self.chan = chan
         if isinstance(chan, Connection):
@@ -77,7 +77,7 @@ class MPISend(MPIBase, StreamingCommand):
     
     def __init__(self, chan: Channel):
         """
-        :param chan:    Multiprocessing's Pipe connection or Queue
+        :param chan: Multiprocessing's Pipe connection or Queue
         """
         super().__init__(chan)
 
@@ -99,7 +99,7 @@ class MPISend(MPIBase, StreamingCommand):
 class MPIReceive(MPIBase, GeneratingCommand):
     """Receives and decodes events from a multiprocessing pipe.
 
-    :ivar producers_count:  Number of producers sending data
+    :ivar producers_count: Number of producers sending data
     :ivar producers_closed: Number of closed producers
     """
     
@@ -134,13 +134,14 @@ class MPIReceive(MPIBase, GeneratingCommand):
                 # If data is a sentinel event (a tuple of two integers),
                 # update and check producers status
                 if isinstance(data, tuple) and len(data) == 2:
-                    print(f'received sentinel event')
+                    self.logger.info(f'Received sentinel event')
                     if data[1] > self.producers_count:
                         self.producers_count = data[1]
                     self.producers_closed += 1
+                    # If all the producers have been closed, terminate the command
                     if (self.producers_closed > 0 and self.producers_count > 0 
                         and self.producers_closed == self.producers_count):
-                        print(f'sentinel ==> close !')
+                        self.logger.info(f'All producers closed, terminating')
                         return
                 # Otherwise, process event
                 elif data:

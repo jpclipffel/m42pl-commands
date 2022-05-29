@@ -8,8 +8,8 @@ from m42pl.commands import DequeBufferingCommand, MergingCommand
 class Output(DequeBufferingCommand, MergingCommand):
     """Prints events on the standard output.
 
-    :ivar count:            Number of received events
-    :ivar term_columns:     Terminal's columns count
+    :ivar count: Number of received events
+    :ivar term_columns: Terminal's columns count
     """
 
     _about_     = 'Prints events'
@@ -20,9 +20,9 @@ class Output(DequeBufferingCommand, MergingCommand):
     def __init__(self, format: str = 'hjson', header: bool = False,
                     buffer: int = 0):
         """
-        :param format:  Output format
-        :param header:  Display header (`True`) or not (`False`)
-        :param buffer:  Buffer max size; Defaults to 1
+        :param format: Output format
+        :param header: Display header (``True``) or not (``False``)
+        :param buffer: Buffer max size; Defaults to 1
         """
         super().__init__(format, header, buffer)
         # ---
@@ -43,7 +43,7 @@ class Output(DequeBufferingCommand, MergingCommand):
     def printer(self, event):
         """Print event on the standard output.
 
-        :param event:   Event to print.
+        :param event: Event to print
         """
         if self.header:
             header = f'[{self.counter}] [{event["sign"]}]'
@@ -89,6 +89,14 @@ class NoOut(Output):
     _about_     = 'Mimics output syntax but does not prints events'
     _aliases_   = ['noout', 'nooutput', 'noprint']
 
-    async def target(self, pipeline):
-        async for event in super(Output, self).target(pipeline):
-            yield event
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+
+    async def setup(self, *args, **kwargs):
+        pass
+
+    async def __call__(self, event, *args, **kwargs):
+        yield event
+
+    async def target(self, event, *args, **kwargs):
+        yield event

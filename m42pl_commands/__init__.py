@@ -5,7 +5,7 @@ from . import mpl_commands, kv, macro
 from . import output
 
 # Multiprocessing
-from . import multiproc_comm, mpi_comm
+from . import multiproc_comm
 
 # Control flow
 from . import (

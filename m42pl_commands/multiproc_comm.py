@@ -10,13 +10,13 @@ from typing import Any, Union
 Channel = Union[Connection, Queue]
 
 
-class MPIBase:
+class MultiprocBase:
     """Base class for MPI send & receive commands.
 
     :ivar msgpack_field: Message pack fields name
     """
 
-    msgpack_field = '__mpi__'
+    msgpack_field = '__multiproc__'
 
     def __init__(self, chan: Channel):
         """
@@ -55,35 +55,38 @@ class MPIBase:
         return self.chan.put(data) # type: ignore
 
 
-class MPISend(MPIBase, StreamingCommand):
+class MultiprocSend(MultiprocBase, StreamingCommand):
     """Encodes and send events to a multiprocessing pipe or queue.
     """
     
-    _aliases_ = ['mpi-send',]
+    _aliases_ = ['multiproc-send',]
     
-    def __new__(cls, *args, **kwargs) -> tuple:
-        """Returns a new (encode, send) commands tuple.
-        """
-        self = super(MPISend, cls).__new__(cls)
-        self.__init__(*args, **kwargs)
-        return (
-            # m42pl.command('msgpack')(dest_field=self.msgpack_field),
-            m42pl.command('encode')(
-                codec='msgpack',
-                dest=self.msgpack_field
-            ),
-            self
-        )
+    # def __new__(cls, *args, **kwargs) -> tuple:
+    #     """Returns a new (encode, send) commands tuple.
+    #     """
+    #     self = super(MultiprocSend, cls).__new__(cls)
+    #     self.__init__(*args, **kwargs)
+    #     return (
+    #         m42pl.command('encode')(
+    #             codec='msgpack',
+    #             dest=self.msgpack_field
+    #         ),
+    #         self
+    #     )
     
     def __init__(self, chan: Channel):
         """
         :param chan: Multiprocessing's Pipe connection or Queue
         """
         super().__init__(chan)
+        self.encoder = m42pl.encoder('msgpack')()
 
     async def target(self, event, pipeline, context):
         try:
-            self.write(event['data'][self.msgpack_field])
+            # self.write(event['data'][self.msgpack_field])
+            self.write(
+                self.encoder.encode(event)
+            )
         except Exception as error:
             self.logger.exception(error)
             pass
@@ -96,34 +99,34 @@ class MPISend(MPIBase, StreamingCommand):
         self.write(self.chunk)
 
 
-class MPIReceive(MPIBase, GeneratingCommand):
+class MultiprocReceive(MultiprocBase, GeneratingCommand):
     """Receives and decodes events from a multiprocessing pipe.
 
     :ivar producers_count: Number of producers sending data
     :ivar producers_closed: Number of closed producers
     """
     
-    _aliases_ = ['mpi-receive',]
+    _aliases_ = ['multiproc-receive',]
     
-    def __new__(cls, *args, **kwargs) -> tuple:
-        """Returns a new (receive, decode) commands tuple.
-        """
-        self = super(MPIReceive, cls).__new__(cls)
-        self.__init__(*args, **kwargs)
-        return (
-            self,
-            # m42pl.command('msgunpack')(src_field=self.msgpack_field)
-            m42pl.command('decode')(
-                codec='msgpack',
-                src=self.msgpack_field
-            )
-        )
+    # def __new__(cls, *args, **kwargs) -> tuple:
+    #     """Returns a new (receive, decode) commands tuple.
+    #     """
+    #     self = super(MultiprocReceive, cls).__new__(cls)
+    #     self.__init__(*args, **kwargs)
+    #     return (
+    #         self,
+    #         m42pl.command('decode')(
+    #             codec='msgpack',
+    #             src=self.msgpack_field
+    #         )
+    #     )
     
     def __init__(self, chan: Channel):
         """
         :param chan:    Multiprocessing's Pipe connection or Queue
         """
         super().__init__(chan)
+        self.encoder = m42pl.encoder('msgpack')()
         self.producers_count = 0
         self.producers_closed = 0
     
@@ -145,13 +148,14 @@ class MPIReceive(MPIBase, GeneratingCommand):
                         return
                 # Otherwise, process event
                 elif data:
-                    yield {
-                        'data': {
-                            self.msgpack_field: data
-                        },
-                        'meta': {},
-                        'sign': None
-                    }
+                    # yield {
+                    #     'data': {
+                    #         self.msgpack_field: data
+                    #     },
+                    #     'meta': {},
+                    #     'sign': None
+                    # }
+                    yield self.encoder.decode(data)
             except EOFError:
                 self.logger.info(f'Channel has been closed')
                 break

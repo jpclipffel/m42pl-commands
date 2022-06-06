@@ -13,12 +13,12 @@ class Output(DequeBufferingCommand, MergingCommand):
     """
 
     _about_     = 'Prints events'
-    _syntax_    = '[[format=]<hjson|raw|...>] [[buffer=]<number>]'
+    _syntax_    = '[[format=]<hjson|raw|...>] [[header=]<yes|no>] [[buffer=]<number>]'
     _aliases_   = ['output', 'print']
     _schema_    = {'properties': {}} # type: ignore
 
-    def __init__(self, format: str = 'hjson', header: bool = False,
-                    buffer: int = 0):
+    def __init__(self, format: str = 'format', header: str|bool = 'header',
+                    buffer: str|int = 'buffer'):
         """
         :param format: Output format
         :param header: Display header (``True``) or not (``False``)

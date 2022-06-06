@@ -1,7 +1,10 @@
+from re import L
 from textwrap import dedent
 from itertools import chain
 from collections import OrderedDict
+
 from hashlib import blake2b
+import xxhash
 
 from tabulate import tabulate
 import curses
@@ -17,6 +20,16 @@ from m42pl.event import Event, signature
 # The module 'functions' (imported here as 'stats_functions') holds a
 # a dict named 'names' which map a stats function name with its class.
 from . import functions as stats_functions
+
+
+class PreStatsMerge(StreamingCommand, MergingCommand):
+    """Force-merges the pipeline before running ``StreamStats``.
+    """
+
+    _about_     = 'Force-merges the pipeline before running StreamStats'
+    _syntax_    = ''
+    _aliases_   = ['_pre_stats_merge',]
+    _schema_    = {'properties': {}} # type: ignore
 
 
 class StreamStats(StreamingCommand):
@@ -48,6 +61,7 @@ class StreamStats(StreamingCommand):
         :param functions: Aggregation functions list
             e.g. `[('function_name', 'source_field', 'dest_field')]`
         :param fields: Aggregation fields list
+        :kwargs merge: ``True`` when merging stats results
         """
         super().__init__(functions, fields)
         # ---
@@ -68,6 +82,9 @@ class StreamStats(StreamingCommand):
             function_name, source_field, dest_field, *_ = chain(function, [None] * 3)
             source_field = Field(source_field)
             dest_field = dest_field and Field(dest_field) or Field(f'{function_name}({source_field.name or ""})')
+            # Post stats use dest_field as source
+            if kwargs.get('merge', False):
+                source_field = dest_field
             # Add destination field and function call
             if function_name in stats_functions.names:
                 self.stated_fields[dest_field] = stats_functions.names[function_name](source_field, self.aggr_fields, dest_field, self.aggregates)
@@ -86,6 +103,7 @@ class StreamStats(StreamingCommand):
         # ---
         # Prepare event signature
         signature = blake2b()
+        # signature = xxhash.xxh64()
         # ---
         # Read aggregation fields values and update signature
         for field in self.aggr_fields:
@@ -109,54 +127,42 @@ class StreamStats(StreamingCommand):
         yield stated_event
 
 
-class PreStatsMerge(StreamingCommand, MergingCommand):
-    """Force-merges the pipeline before running ``StreamStats``.
+class PostStatsBuffer(DequeBufferingCommand):
+    """Buffers events yields by ``StreamStats``.
     """
 
-    _about_     = 'Force-merges the pipeline before running StreamStats'
+    _about_     = 'Buffers StreamStats events'
+    _syntax_    = '[[size=]<buffer size>] [[showchunk=]<yes|no>]'
+    _aliases_   = ['_post_stats_buffer', ]
+    _schema_    = {'properties': {}}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+
+    async def setup(self, event, pipeline, context):
+        await super().setup(
+            event,
+            pipeline,
+            context,
+            10
+        )
+
+    async def target(self, pipeline):
+        async for event in super().target(pipeline):
+            yield event
+
+
+class PostStatsMerge(StreamStats, MergingCommand):
+    """Force-merges the pipeline after running ``StreamStats``.
+    """
+
+    _about_     = 'Force-merges the pipeline after running StreamStats'
     _syntax_    = ''
-    _aliases_   = ['_pre_stats_merge',]
+    _aliases_   = ['_post_stats_merge',]
     _schema_    = {'properties': {}} # type: ignore
 
-    async def target(self, event, *args, **kwargs):
-        yield event
-
-
-# class PostStatsMerge(StreamingCommand, MergingCommand):
-#     """Merges `stats` results.
-#     """
-
-#     _aliases_ = ['_post_stats_merge',]
-
-#     async def target(self, event, pipeline, context):
-#         yield event
-
-
-# class PostStatsBuffer(DequeBufferingCommand):
-#     """Buffer events yield by `stats`.
-#     """
-
-#     _aliases_ = ['_post_stats_buffer',]
-
-#     def __init__(self, buffer: int = 10000, *args, **kwargs):
-#         """
-#         :param buffer:  Internal buffer size (i.e. the amount of
-#                         different event to keep in buffer before
-#                         yielding them).
-#         """
-#         super().__init__(buffer)
-#         self.buffer_size = Field(buffer, type=int, default=10000)
-
-#     async def setup(self, event, pipeline, context):
-#         await super().setup(
-#             event,
-#             pipeline,
-#             maxsize=await self.buffer_size.read(event, pipeline, context)
-#         )
-
-#     # async def target(self, pipeline):
-#     #     async for event in super().target(pipeline):
-#     #         yield event
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, merge=True, **kwargs)
 
 
 class Stats(StreamingCommand):
@@ -239,9 +245,10 @@ class Stats(StreamingCommand):
           commands.
         """
         return (
-            PreStatsMerge(),
+            # PreStatsMerge(),
             StreamStats(*args, **kwargs),
-            # PostStatsMerge(),
+            # PostStatsBuffer(*args, **kwargs),
+            PostStatsMerge(*args, **kwargs),
             # PostStatsBuffer(**kwargs)
         )
 

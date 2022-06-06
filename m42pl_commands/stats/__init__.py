@@ -4,7 +4,7 @@ from itertools import chain
 from collections import OrderedDict
 
 from hashlib import blake2b
-import xxhash
+# import xxhash
 
 from tabulate import tabulate
 import curses

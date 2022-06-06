@@ -53,7 +53,7 @@ class MPLServerApi(GeneratingCommand):
                     kvstore_kwargs: str = 'kvstore.kwargs', dispatcher_kwargs: str = 'dispatcher.kwargs'):
         """
         :param host: Server host; Defaults to ``localhost``
-        :param port: Server port; Defaults to ``8080``
+        :param port: Server port; Defaults to ``4242``
         :param kvstore: Server KVStore name; Defaults to ``redis``
         :param dispatcher: Server dispatcher; Defaults to ``local_detached``
         :param kvstore_kwargs: KVStore configuration

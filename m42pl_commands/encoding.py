@@ -112,9 +112,6 @@ class Decode(Base):
                     await self.src.read(event, pipeline, context)
                 )
             )
-        # yield {
-        #     'data': self.encoder.decode(event['frames'][0])
-        # }
 
 
 class Codecs(StreamingCommand):

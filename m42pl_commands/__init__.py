@@ -4,8 +4,8 @@ from . import mpl_commands, kv, macro
 # Debug
 from . import output
 
-# MPI
-from . import mpi
+# Multiprocessing
+from . import multiproc_comm, mpi_comm
 
 # Control flow
 from . import (
@@ -15,7 +15,7 @@ from . import (
 
 # Data manipulation
 from . import (
-    rename, eval, regex, xpath, jsonpath, stats, jinja, parse_json,
+    rename, eval, regexes, xpath, jsonpath, stats, jinja, parse_json,
     encoding, extract_keyvalues, extract_maps, cut,
     expand, split, fields, wrap, fieldstats, grok, delta
 )

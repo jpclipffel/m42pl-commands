@@ -17,8 +17,8 @@ class Output(DequeBufferingCommand, MergingCommand):
     _aliases_   = ['output', 'print']
     _schema_    = {'properties': {}} # type: ignore
 
-    def __init__(self, format: str = 'format', header: str|bool = 'header',
-                    buffer: str|int = 'buffer'):
+    def __init__(self, format: str = 'hjson', header: str|bool = False,
+                    buffer: str|int = 1):
         """
         :param format: Output format
         :param header: Display header (``True``) or not (``False``)

@@ -1,3 +1,7 @@
+from collections import OrderedDict
+from readline import insert_text
+from textwrap import dedent
+
 from m42pl.pipeline import Pipeline, InfiniteRunner
 from m42pl.event import derive
 from m42pl.fields import Field, FieldsMap
@@ -87,7 +91,7 @@ class RunMacro(BaseMacro, StreamingCommand):
     _aliases_   = ['_macrorun', ]
     _schema_    = {'additionalProperties': True}
 
-    def __init__(self, name: str, macro_kwargs: dict = {}):
+    def __init__(self, name: str, params: dict = {}):
         """
         :param name:    Macro name.
         """
@@ -96,7 +100,7 @@ class RunMacro(BaseMacro, StreamingCommand):
         self.params = FieldsMap(**dict([
             (name, Field(field))
             for name, field
-            in macro_kwargs.items()]
+            in params.items()]
         ))
 
     async def setup(self, event, pipeline, context):
@@ -149,13 +153,26 @@ class GetMacros(BaseMacro, GeneratingCommand):
 
     key_name    = 'macro'
 
+    def __init__(self, showinfo: bool = False):
+        """
+        :param showinfo: If ``True``, show all macro infrormation.
+            Otherwise, only the macro's name is shown.
+        """
+        self.showinfo = Field(showinfo, default=showinfo, type=bool)
+
     async def target(self, event, pipeline, context):
         macros = await context.kvstore.read(self.macros_index, default={})
+        showinfo = await self.showinfo.read(event, pipeline, context)
         for name, macro in macros.items():
             if macro:
-                yield derive(event, {
-                    self.key_name: {**{'name': name}, **macro}
-                })
+                if showinfo:
+                    yield derive(event, {
+                        self.key_name: {**{'name': name}, **macro}
+                    })
+                else:
+                    yield derive(event, {
+                        self.key_name: {'name': name}
+                    })
 
 
 class DelMacro(BaseMacro, MetaCommand):
@@ -174,7 +191,7 @@ class DelMacro(BaseMacro, MetaCommand):
         super().__init__(name)
         self.name = Field(name, default=name, seqn=True)
 
-    async def target(self, event, pipeline, context):
+    async def target(self, event, pipeline, context, *args, **kwargs):
         macro_names = await self.name.read(event, pipeline, context)
         for macro_name in macro_names:
             # Remove macro from KVStore
@@ -205,7 +222,7 @@ class PurgeMacros(BaseMacro, MetaCommand):
     _aliases_   = ['purgemacro', 'purgemacros']
     _schema_    = {'properties': {}} # type: ignore
 
-    async def target(self, event, pipeline, context):
+    async def target(self, event, pipeline, context, *args, **kwargs):
         await context.kvstore.delete(self.kvstore_prefix)
         await context.kvstore.delete(self.macros_index)
 
@@ -229,14 +246,47 @@ class Macro(MetaCommand):
     """
     
     _about_     = 'Record a macro, run a macro or return macros list'
-    _syntax_    = '[<name> [pipeline]]'
+    _syntax_    = '<name> (as [...] | <kwargs>)'
     _aliases_   = ['macro',]
     _schema_    = {'properties': {}} # type: ignore
 
-    def __new__(self, *args, **kwargs):
-        if len(args) > 1 or len(kwargs) > 1 or 'pipeline' in kwargs:
-            return RecordMacro(*args, **kwargs), CloseMacro()
-        elif len(args) == 1 or len(kwargs) == 1:
-            return RunMacro(*args, macro_kwargs=kwargs), CloseMacro()
+    _grammar_ = OrderedDict(MetaCommand._grammar_)
+    _grammar_['start'] = dedent('''\
+        macro_defn  : "as" piperef
+        macro_call  : kwargs?
+        start       : NAME (macro_defn | macro_call)
+    ''')
+
+    class Transformer(MetaCommand.Transformer):
+
+        def macro_defn(self, items):
+            return items[0]
+
+        def macro_call(self, items):
+            params = {}
+            if len(items) > 0:
+                for param in items[0]:
+                    params.update(param)
+            return params
+        
+        def start(self, items):
+            # Macro call
+            if isinstance(items[1], dict):
+                return (), {'name': items[0], 'params': items[1]}
+            # Macro definition
+            else:
+                return (), {'name': items[0], 'pipeline': items[1]}
+
+    def __new__(self, name: str, pipeline: str = None, params: dict = {}):
+        if pipeline is not None:
+            return RecordMacro(name, pipeline), CloseMacro()
         else:
-            return GetMacros(), CloseMacro()
+            return RunMacro(name, params), CloseMacro()
+
+    # def __new__(self, *args, **kwargs):
+    #     if len(args) > 1 or len(kwargs) > 1 or 'pipeline' in kwargs:
+    #         return RecordMacro(*args, **kwargs), CloseMacro()
+    #     elif len(args) == 1 or len(kwargs) == 1:
+    #         return RunMacro(*args, macro_kwargs=kwargs), CloseMacro()
+    #     else:
+    #         return GetMacros(), CloseMacro()

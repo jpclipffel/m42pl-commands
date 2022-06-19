@@ -10,6 +10,7 @@ setup(
   install_requires=[
     'm42pl',
     # ---
+    'python-dateutil',
     'pyzmq>=22.3.0',
     'aiohttp>=3.8.1',
     'pygments>=2.10.0',

@@ -2,7 +2,7 @@
 from . import mpl_commands, kv, macro
 
 # Debug
-from . import output
+from . import output, mpl_report
 
 # Multiprocessing
 from . import multiproc_comm

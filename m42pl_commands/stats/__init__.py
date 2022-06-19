@@ -287,7 +287,7 @@ class StatsTable(BufferingCommand):
         curses.noecho()
         self.stdscr.clear()
         # Init view
-        self.stdscr.addstr(0, 0, 'Pipeline runing')
+        self.stdscr.addstr(0, 0, 'Pipeline running')
 
     async def target(self, pipeline, *args, **kwargs):
         # Get new events from queue and update table

@@ -59,6 +59,7 @@ class ExtractMap(StreamingCommand):
             event, 
             dict(zip(
                 self.get_header(),
-                filter(None, self.delim.split(line))
+                # filter(None, self.delim.split(line))
+                self.delim.split(line)
             ))
         )

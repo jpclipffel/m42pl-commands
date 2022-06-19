@@ -1,11 +1,9 @@
 from collections import OrderedDict
 from textwrap import dedent
 
-from asyncio import sleep
-
 from m42pl.commands import StreamingCommand
-from m42pl.pipeline import Pipeline, InfiniteRunner
-from m42pl.fields import Field, pipe
+from m42pl.pipeline import InfiniteRunner
+from m42pl.fields import Field
 
 
 class Foreach(StreamingCommand):

@@ -1,12 +1,11 @@
 from collections import OrderedDict
-from readline import insert_text
 from textwrap import dedent
+import json
 
 from m42pl.pipeline import Pipeline, InfiniteRunner
-from m42pl.event import derive
+from m42pl.event import Event, derive
 from m42pl.fields import Field, FieldsMap
 from m42pl.commands import MetaCommand, StreamingCommand, GeneratingCommand
-from m42pl.utils.time import now
 from m42pl.errors import CommandError
 
 
@@ -93,9 +92,10 @@ class RunMacro(BaseMacro, StreamingCommand):
 
     def __init__(self, name: str, params: dict = {}):
         """
-        :param name:    Macro name.
+        :param name: Macro name
+        :param params: Macro initialization parameters
         """
-        super().__init__(name)
+        super().__init__(name, params)
         self.name = Field(name, default=name)
         self.params = FieldsMap(**dict([
             (name, Field(field))
@@ -112,6 +112,8 @@ class RunMacro(BaseMacro, StreamingCommand):
                 self,
                 f'requested macro "{macro_name}" not found: macro_fqdn="{macro_fqdn}"'
             )
+        # Read macro parameter
+        self.params = await self.params.read(event, pipeline, context)
         # Init macro main pipeline
         self.pipeline = Pipeline.from_dict(
             macro_dict['main']
@@ -122,14 +124,12 @@ class RunMacro(BaseMacro, StreamingCommand):
             if pipeline_name not in ['main',]:
                 pipelines[pipeline_name] = Pipeline.from_dict(pipeline_json)
         context.add_pipelines(pipelines)
-        # Init macro event
-        self.params = await self.params.read(event, pipeline, context)
-        event['data'].update(self.params.__dict__)
         # Init runner
         self.runner = InfiniteRunner(
             self.pipeline,
             context,
-            event
+            # event,
+            derive(event, self.params.__dict__)
         )
         await self.runner.setup()
 
@@ -238,11 +238,10 @@ class CloseMacro(StreamingCommand):
 
 
 class Macro(MetaCommand):
-    """Record or run a macro.
+    """Records or runs a macro.
     
     This command returns an instance of :class:`RecordMacro`,
-    :class:`RunMacro` or :class:`GetMacros` depending on what
-    parameters are given.
+    or :class:`RunMacro` in function of the call parameters.
     """
     
     _about_     = 'Record a macro, run a macro or return macros list'
@@ -282,11 +281,3 @@ class Macro(MetaCommand):
             return RecordMacro(name, pipeline), CloseMacro()
         else:
             return RunMacro(name, params), CloseMacro()
-
-    # def __new__(self, *args, **kwargs):
-    #     if len(args) > 1 or len(kwargs) > 1 or 'pipeline' in kwargs:
-    #         return RecordMacro(*args, **kwargs), CloseMacro()
-    #     elif len(args) == 1 or len(kwargs) == 1:
-    #         return RunMacro(*args, macro_kwargs=kwargs), CloseMacro()
-    #     else:
-    #         return GetMacros(), CloseMacro()

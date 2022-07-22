@@ -19,7 +19,7 @@ class HTTPServer(GeneratingCommand):
     _about_     = 'Runs an HTTP server'
     _syntax_    = (
         '''[[host=]{host}] [[port]={port}] (<pipeline> '''
-        '''| with 'method' on 'path' = <pipeline>, ...)'''
+        '''| with 'method' on 'path' as <pipeline>, ...)'''
     )
     _aliases_   = ['http_server', 'server_http']
     _schema_    = {
@@ -45,7 +45,7 @@ class HTTPServer(GeneratingCommand):
 
     _grammar_   = OrderedDict(GeneratingCommand._grammar_)
     _grammar_['start'] = dedent('''\
-        rule    : STRING "on" field "=" piperef
+        rule    : STRING "on" field "as" piperef
         rules   : "with" rule (","? rule)*
         start   : arguments? (piperef | rules)
     ''')

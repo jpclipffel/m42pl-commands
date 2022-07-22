@@ -5,7 +5,7 @@ from m42pl.fields import Field, FieldsMap
 
 
 class Cut(StreamingCommand):
-    """Cuts (splits) a field using a regular expression.
+    """Splits a field using a regular expression.
     """
 
     _about_     = 'Cut (split) a field using a regular expression'
@@ -37,11 +37,15 @@ class Cut(StreamingCommand):
     async def cut_filter(self, event, pipeline, context):
         return list(filter(
             None, 
-            self.expr.split(await self.field.read(event, pipeline, context))
+            self.expr.split(
+                await self.field.read(event, pipeline, context)
+            )
         ))
     
     async def cut_nofilter(self, event, pipeline, context):
-        return self.expr.split(await self.field.read(event, pipeline, context))
+        return self.expr.split(
+            await self.field.read(event, pipeline, context)
+        )
 
     async def setup(self, event, pipeline, context):
         fields = await self.fields.read(event, pipeline, context)

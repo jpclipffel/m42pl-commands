@@ -8,7 +8,10 @@ class Delta(StreamingCommand):
     """
 
     _aliases_   = ['delta', ]
-    _about_     = 'Compute the difference between the same field of two consecutive events'
+    _about_     = (
+        'Compute the difference between the same field '
+        'of two consecutive events'
+    )
     _syntax_    = '[field=]<field>'
 
     def __init__(self, field: str = None):
